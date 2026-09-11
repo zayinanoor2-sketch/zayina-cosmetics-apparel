@@ -4,79 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zayina Cosmetics & Apparel</title>
-    <!-- Aapki apni CSS file -->
+    <!-- Aapki apni style file -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Aapka Main Storefront / UI -->
-    <header>
+    <!-- Navigation Tabs / Header -->
+    <header class="main-header">
         <h1>Zayina Cosmetics & Apparel</h1>
-        <p>Real-Time Synchronized Store</p>
+        <nav class="nav-buttons">
+            <button onclick="switchTab('home')" class="nav-btn active-tab">Storefront</button>
+            <button onclick="switchTab('admin')" class="nav-btn">Admin Panel</button>
+            <button onclick="switchTab('order')" class="nav-btn">Place Order</button>
+            <button onclick="switchTab('reseller')" class="nav-btn">Reseller Program</button>
+        </nav>
     </header>
 
-    <main>
-        <section id="products-section">
+    <main class="container">
+        <!-- TAB 1: HOME STOREFRONT (Real-Time Products) -->
+        <section id="home-section" class="tab-content active">
             <h2>Available Products</h2>
-            <!-- Real-time products yahan automatically load honge -->
             <div id="product-container" class="product-grid">
                 <p>Loading real-time products...</p>
             </div>
         </section>
+
+        <!-- TAB 2: ADMIN PANEL (Add Products) -->
+        <section id="admin-section" class="tab-content">
+            <h2>Admin Panel - Add Product</h2>
+            <form id="product-form" class="styled-form">
+                <div class="form-group">
+                    <label>Product Name:</label>
+                    <input type="text" id="p-name" required placeholder="Enter product name">
+                </div>
+                <div class="form-group">
+                    <label>Price (Rs.):</label>
+                    <input type="number" id="p-price" required placeholder="Enter price">
+                </div>
+                <div class="form-group">
+                    <label>Description:</label>
+                    <textarea id="p-desc" rows="3" placeholder="Enter description"></textarea>
+                </div>
+                <button type="submit" id="p-btn" class="action-btn">Add Product (Real-Time)</button>
+            </form>
+        </section>
+
+        <!-- TAB 3: PLACE ORDER -->
+        <section id="order-section" class="tab-content">
+            <h2>Checkout & Place Order</h2>
+            <form id="order-form" class="styled-form">
+                <div class="form-group">
+                    <label>Customer Name:</label>
+                    <input type="text" id="cust-name" required placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number:</label>
+                    <input type="text" id="cust-phone" required placeholder="Your phone number">
+                </div>
+                <div class="form-group">
+                    <label>Shipping Address:</label>
+                    <textarea id="cust-address" rows="3" required placeholder="Delivery address"></textarea>
+                </div>
+                <button type="submit" id="order-btn" class="action-btn">Place Order</button>
+            </form>
+        </section>
+
+        <!-- TAB 4: RESELLER PROGRAM -->
+        <section id="reseller-section" class="tab-content">
+            <h2>Reseller Application</h2>
+            <form id="reseller-form" class="styled-form">
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <input type="text" id="res-name" required placeholder="Your name">
+                </div>
+                <div class="form-group">
+                    <label>Phone / WhatsApp:</label>
+                    <input type="text" id="res-phone" required placeholder="Your WhatsApp number">
+                </div>
+                <button type="submit" id="res-btn" class="action-btn">Submit Application</button>
+            </form>
+            <div id="status-box" class="status-msg"></div>
+        </section>
     </main>
 
-    <!-- Firebase SDK aur Real-Time Sync Logic -->
-    <script type="module">
-        // 1. Firebase Initialization (Aap apni credentials yahan dalein ge)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // 2. Real-Time Product Listener (Baghair page refresh ke update hoga)
-        function initRealtimeProducts() {
-            const container = document.getElementById("product-container");
-            if (!container) return;
-
-            // onSnapshot saari devices par live changes sync rakhta hai
-            onSnapshot(collection(db, "products"), (snapshot) => {
-                if (snapshot.empty) {
-                    container.innerHTML = "<p>No products available right now.</p>";
-                    return;
-                }
-
-                let productsHTML = "";
-                snapshot.forEach((doc) => {
-                    const product = doc.data();
-                    productsHTML += `
-                        <div class="product-card">
-                            <h3>${product.name || 'Product'}</h3>
-                            <p>Price: Rs. ${product.price || '0'}</p>
-                            <p>${product.description || ''}</p>
-                        </div>
-                    `;
-                });
-                container.innerHTML = productsHTML;
-            }, (error) => {
-                console.error("Error fetching real-time products: ", error);
-                container.innerHTML = "<p>Connection error. Please check configuration.</p>";
-            });
-        }
-
-        // Page load hone par real-time sync start ho jaye gi
-        document.addEventListener("DOMContentLoaded", () => {
-            initRealtimeProducts();
-        });
-    </script>
+    <!-- Main JavaScript File Connection -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
