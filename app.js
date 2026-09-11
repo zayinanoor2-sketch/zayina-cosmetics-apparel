@@ -41,11 +41,11 @@ let orders = [];
 let resellerApps = [];
 
 let currentUser = null;
-let resellerApproved = false;
-let resellerUID = "";
-let resellerPoints = 0;
+let resellerApproved = localStorage.getItem("zayinaResellerApproved") === "true";
+let resellerUID = localStorage.getItem("zayinaResellerUID") || "";
+let resellerPoints = 10;
 let resellerSales = 0;
-let storeName = "";
+let storeName = "My Zayina Store";
 let selectedShareProduct = null;
 let stagedAdminImageUrl = "";
 let dna = JSON.parse(localStorage.getItem("zayinaDNA") || "{}");
@@ -64,14 +64,12 @@ const defaultProducts = [
 // REAL-TIME FIRESTORE LISTENERS (SYNC)
 // ==========================================
 function initFirebaseSync() {
- // 1. Real-time Products Listener
  db.collection("products").onSnapshot(snapshot => {
   products = [];
   snapshot.forEach(doc => {
    products.push({ firestoreId: doc.id, ...doc.data() });
   });
   if (products.length === 0) {
-   // Seed default products if database is empty
    defaultProducts.forEach(p => db.collection("products").add(p));
   } else {
    renderProducts();
@@ -82,7 +80,6 @@ function initFirebaseSync() {
   updateConnectionStatus(false);
  });
 
- // 2. Real-time Reseller Applications Listener
  db.collection("resellerApplications").onSnapshot(snapshot => {
   resellerApps = [];
   snapshot.forEach(doc => {
@@ -92,7 +89,6 @@ function initFirebaseSync() {
   checkResellerAppLiveStatus();
  }, error => console.error(error));
 
- // 3. Real-time Orders Listener for Admin & Live Tracking
  db.collection("orders").onSnapshot(snapshot => {
   orders = [];
   snapshot.forEach(doc => {
@@ -101,7 +97,6 @@ function initFirebaseSync() {
   renderAdmin();
  }, error => console.error(error));
 
- // 4. Real-time Reviews Listener
  db.collection("reviews").onSnapshot(snapshot => {
   reviews = [];
   snapshot.forEach(doc => {
@@ -124,7 +119,6 @@ function updateConnectionStatus(isConnected) {
  }
 }
 
-// Authenticate anonymously for general customer sessions, or persist UID
 auth.signInAnonymously().then(cred => {
  currentUser = cred.user;
  initFirebaseSync();
@@ -160,6 +154,7 @@ function formatPrice(val) {
 
 function showToast(msg) {
  const t = document.getElementById("toast");
+ if(!t) return;
  t.textContent = msg;
  t.classList.add("show");
  setTimeout(() => { t.classList.remove("show"); }, 2200);
@@ -185,9 +180,11 @@ function openSortModal() { openModal('sortModal'); }
 
 function selectSortOption(val, labelName) {
  currentSortValue = val;
- document.getElementById("currentSortLabel").textContent = labelName;
+ const lbl = document.getElementById("currentSortLabel");
+ if(lbl) lbl.textContent = labelName;
  document.querySelectorAll(".sort-option-item").forEach(el => el.classList.remove("active"));
- document.getElementById("sortOpt-" + val).classList.add("active");
+ const opt = document.getElementById("sortOpt-" + val);
+ if(opt) opt.classList.add("active");
  closeModal('sortModal');
  applyFilters();
 }
@@ -200,13 +197,13 @@ function switchTab(tab) {
  });
 
  if (tab === "cosmetics") {
-  document.getElementById("navCosmetics").classList.add("active-tab");
+  document.getElementById("navCosmetics")?.classList.add("active-tab");
   document.getElementById("sectionCosmetics").style.display = "block";
  } else if (tab === "clothes") {
-  document.getElementById("navClothes").classList.add("active-tab");
+  document.getElementById("navClothes")?.classList.add("active-tab");
   document.getElementById("sectionClothes").style.display = "block";
  } else if (tab === "bundles") {
-  document.getElementById("navBundles").classList.add("active-tab");
+  document.getElementById("navBundles")?.classList.add("active-tab");
   document.getElementById("sectionBundles").style.display = "block";
  }
 }
@@ -279,16 +276,21 @@ function renderProducts(list = products) {
   else if (p.category === "bundles") bun += card;
  });
 
- document.getElementById("cosmeticsGrid").innerHTML = cos || '<p style="font-size:10px">No items found.</p>';
- document.getElementById("clothesGrid").innerHTML = clo || '<p style="font-size:10px">No items found.</p>';
- document.getElementById("bundlesGrid").innerHTML = bun || '<p style="font-size:10px">No items found.</p>';
+ const cGrid = document.getElementById("cosmeticsGrid");
+ const clGrid = document.getElementById("clothesGrid");
+ const bGrid = document.getElementById("bundlesGrid");
+
+ if(cGrid) cGrid.innerHTML = cos || '<p style="font-size:10px">No items found.</p>';
+ if(clGrid) clGrid.innerHTML = clo || '<p style="font-size:10px">No items found.</p>';
+ if(bGrid) bGrid.innerHTML = bun || '<p style="font-size:10px">No items found.</p>';
 
  updateDealMeter();
  updateCartCount();
 }
 
 function applyFilters() {
- let q = document.getElementById("searchInput").value.toLowerCase();
+ const sInput = document.getElementById("searchInput");
+ let q = sInput ? sInput.value.toLowerCase() : "";
  let filtered = products.filter(p => {
   const text = (p.name + " " + p.desc + " " + (p.highlights || []).join(" ")).toLowerCase();
   return text.includes(q);
@@ -314,6 +316,41 @@ function addToCart(id) {
  showToast(p.name + " added to cart");
 }
 
+function openCartModal() {
+ const listEl = document.getElementById("cartItemsList");
+ const totalEl = document.getElementById("cartTotalPrice");
+ const savingEl = document.getElementById("cartSavingText");
+
+ if(!listEl) return;
+
+ if(cart.length === 0) {
+  listEl.innerHTML = '<p style="font-size:9px;color:#777;text-align:center;padding:10px;">Your cart is empty.</p>';
+  if(totalEl) totalEl.textContent = formatPrice(0);
+  if(savingEl) savingEl.textContent = "";
+  openModal("cartModal");
+  return;
+ }
+
+ let total = 0;
+ let marketTotal = 0;
+ listEl.innerHTML = cart.map((item, index) => {
+  total += Number(item.retailPrice || 0);
+  marketTotal += Number(item.marketPrice || item.retailPrice || 0);
+  return `
+   <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid #eee;">
+    <div>
+     <b>${esc(item.name)}</b><br><span style="color:var(--accent);">${formatPrice(item.retailPrice)}</span>
+    </div>
+    <button style="border:0; background:var(--red); color:#fff; padding:3px 6px; border-radius:4px; font-size:8px;" onclick="removeFromCart(${index})">Remove</button>
+   </div>
+  `;
+ }).join("");
+
+ if(totalEl) totalEl.textContent = formatPrice(total);
+ if(savingEl) savingEl.textContent = `You saved ${formatPrice(marketTotal - total)} on this order!`;
+ openModal("cartModal");
+}
+
 function removeFromCart(index) {
  cart.splice(index, 1);
  saveLocalDeviceData();
@@ -332,13 +369,17 @@ function updateDealMeter() {
  const threshold = 2000;
  let percent = Math.min(100, Math.round(total / threshold * 100));
 
- document.getElementById("dealMeterProgress").textContent = percent + "%";
- document.getElementById("dealProgressFill").style.width = percent + "%";
+ const fill = document.getElementById("dealProgressFill");
+ const text = document.getElementById("dealMeterText");
+ const prog = document.getElementById("dealMeterProgress");
+
+ if(prog) prog.textContent = percent + "%";
+ if(fill) fill.style.width = percent + "%";
 
  if (total >= threshold) {
-  document.getElementById("dealMeterText").textContent = "🎉 Congratulations! Free Delivery Unlocked!";
+  if(text) text.textContent = "🎉 Congratulations! Free Delivery Unlocked!";
  } else {
-  document.getElementById("dealMeterText").textContent = "Add " + formatPrice(threshold - total) + " more to unlock free delivery!";
+  if(text) text.textContent = "Add " + formatPrice(threshold - total) + " more to unlock free delivery!";
  }
 }
 
@@ -365,22 +406,25 @@ function openProductDetail(id) {
    <button class="btn-main" onclick="openResellerShare(${p.id})"><i class="fas fa-share-nodes"></i> Set Commission & Share Product</button>
   </div>` : '';
 
- document.getElementById("modalProductContentView").innerHTML = `
-  <img src="${esc(p.img)}" style="width:100%;height:190px;object-fit:cover;border-radius:9px" onerror="this.src='https://via.placeholder.com/600x500?text=Zayina+Product'">
-  <h3 style="font-size:16px;margin-top:9px">${esc(p.name)}</h3>
-  <p style="font-size:9px;color:#666;margin:4px 0">${esc(p.desc)}</p>
-  <div class="feature-box">
-   <div class="feature-title"><i class="fas fa-sparkles"></i> Product Highlights</div>
-   <div class="feature-list">${highlights}</div>
-  </div>
-  <div>
-   <span class="detail-market">${formatPrice(p.marketPrice)}</span>
-   <span class="detail-price">${formatPrice(p.retailPrice)}</span>
-  </div>
-  ${resellerOpportunityHtml}
-  <button class="btn-main" style="background:#25d366" onclick="buyNowWhatsApp(${p.id})"><i class="fab fa-whatsapp"></i> Buy Now</button>
-  <button class="btn-main" onclick="addToCart(${p.id});closeModal('productDetailsModal')"><i class="fas fa-cart-plus"></i> Add to Cart</button>
- `;
+ const content = document.getElementById("modalProductContentView");
+ if(content) {
+  content.innerHTML = `
+   <img src="${esc(p.img)}" style="width:100%;height:190px;object-fit:cover;border-radius:9px" onerror="this.src='https://via.placeholder.com/600x500?text=Zayina+Product'">
+   <h3 style="font-size:16px;margin-top:9px">${esc(p.name)}</h3>
+   <p style="font-size:9px;color:#666;margin:4px 0">${esc(p.desc)}</p>
+   <div class="feature-box">
+    <div class="feature-title"><i class="fas fa-sparkles"></i> Product Highlights</div>
+    <div class="feature-list">${highlights}</div>
+   </div>
+   <div>
+    <span class="detail-market">${formatPrice(p.marketPrice)}</span>
+    <span class="detail-price">${formatPrice(p.retailPrice)}</span>
+   </div>
+   ${resellerOpportunityHtml}
+   <button class="btn-main" style="background:#25d366" onclick="buyNowWhatsApp(${p.id})"><i class="fab fa-whatsapp"></i> Buy Now</button>
+   <button class="btn-main" onclick="addToCart(${p.id});closeModal('productDetailsModal')"><i class="fas fa-cart-plus"></i> Add to Cart</button>
+  `;
+ }
  openModal("productDetailsModal");
 }
 
@@ -424,12 +468,15 @@ function createCloudOrder(items) {
   createdAt: firebase.firestore.FieldValue.serverTimestamp()
  };
  db.collection("orders").add(newOrder).catch(err => console.error("Order sync error:", err));
- document.getElementById("trackIdInput").value = orderId;
+ const trackInput = document.getElementById("trackIdInput");
+ if(trackInput) trackInput.value = orderId;
 }
 
 function checkOrderStatus() {
- const id = document.getElementById("trackIdInput").value.trim();
+ const trackInput = document.getElementById("trackIdInput");
+ const id = trackInput ? trackInput.value.trim() : "";
  const box = document.getElementById("trackingResultBox");
+ if(!box) return;
  box.style.display = "block";
  const order = orders.find(x => x.id.toLowerCase() === id.toLowerCase());
  if (!order) {
@@ -460,11 +507,17 @@ function submitResellerApp() {
  db.collection("resellerApplications").add(appData).then(() => {
   localStorage.setItem("zayinaResellerUID", generatedUID);
   resellerUID = generatedUID;
-  document.getElementById("resellerFormView").style.display = "none";
-  document.getElementById("resauthStatusView").style.display = "block";
-  document.getElementById("userPortalStatusBadge").className = "status-badge status-pending";
-  document.getElementById("userPortalStatusBadge").textContent = "Pending Approval";
-  document.getElementById("userPortalUIDText").textContent = "Your Reseller UID: " + generatedUID;
+  const fView = document.getElementById("resellerFormView");
+  const sView = document.getElementById("resauthStatusView");
+  if(fView) fView.style.display = "none";
+  if(sView) sView.style.display = "block";
+  const badge = document.getElementById("userPortalStatusBadge");
+  if(badge) {
+   badge.className = "status-badge status-pending";
+   badge.textContent = "Pending Approval";
+  }
+  const uidText = document.getElementById("userPortalUIDText");
+  if(uidText) uidText.textContent = "Your Reseller UID: " + generatedUID;
   showToast("Reseller application sent to Admin Cloud!");
  }).catch(err => alert("Error submitting application: " + err.message));
 }
@@ -498,16 +551,23 @@ function openResellerDashboardTab() {
 
 function updateResellerDashboard() {
  const area = document.getElementById("resellerDashboardArea");
+ if (!area) return;
  if (!resellerApproved) { area.style.display = "none"; return; }
  area.style.display = "block";
- document.getElementById("dashResellerUID").textContent = resellerUID;
- document.getElementById("resellerPoints").textContent = resellerPoints;
- document.getElementById("resellerSales").textContent = resellerSales;
+ const uidEl = document.getElementById("dashResellerUID");
+ const ptsEl = document.getElementById("resellerPoints");
+ const salesEl = document.getElementById("resellerSales");
+ const lvlEl = document.getElementById("resellerLevel");
+
+ if(uidEl) uidEl.textContent = resellerUID;
+ if(ptsEl) ptsEl.textContent = resellerPoints;
+ if(salesEl) salesEl.textContent = resellerSales;
+
  let level = "Bronze";
  if (resellerPoints >= 100) level = "Silver";
  if (resellerPoints >= 250) level = "Gold";
  if (resellerPoints >= 500) level = "Elite";
- document.getElementById("resellerLevel").textContent = level;
+ if(lvlEl) lvlEl.textContent = level;
 }
 
 // ==========================================
@@ -518,11 +578,13 @@ function openAdminPanel() {
 }
 
 function verifyAdmin() {
- const pass = document.getElementById("adminPassInput").value;
- // Secure admin verification checkpoint
+ const passInput = document.getElementById("adminPassInput");
+ const pass = passInput ? passInput.value : "";
  if (pass === "Zayina66#") {
-  document.getElementById("adminLoginView").style.display = "none";
-  document.getElementById("adminDashboardView").style.display = "block";
+  const lView = document.getElementById("adminLoginView");
+  const dView = document.getElementById("adminDashboardView");
+  if(lView) lView.style.display = "none";
+  if(dView) dView.style.display = "block";
   renderAdmin();
   showToast("Admin login successful");
  } else {
@@ -550,7 +612,7 @@ function renderAdmin() {
 
  const requestsBox = document.getElementById("adminRequestsBox");
  if (requestsBox) {
-  requestsBox.innerHTML = resellerApps.length ? resellerApps.map((r, index) => `
+  requestsBox.innerHTML = resellerApps.length ? resellerApps.map((r) => `
    <div style="background:white;padding:6px;border-radius:5px;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
     <div>
       <b>${esc(r.name)}</b><br><span style="font-size:8px">${esc(r.phone)} (UID: ${esc(r.uid)})</span>
@@ -691,32 +753,43 @@ function openResellerShare(id) {
  }
  selectedShareProduct = products.find(x => x.id === id);
  if (!selectedShareProduct) return;
- document.getElementById("shareCommissionInput").value = 100;
+ const commInput = document.getElementById("shareCommissionInput");
+ if(commInput) commInput.value = 100;
  updateSharePrice();
- document.getElementById("shareProductPreview").innerHTML = `
-  <div style="display:flex;gap:7px;background:#faf7ef;padding:7px;border-radius:8px">
-   <img src="${esc(selectedShareProduct.img)}" style="width:60px;height:60px;object-fit:cover;border-radius:6px">
-   <div>
-    <b style="font-size:10px">${esc(selectedShareProduct.name)}</b>
-    <p style="font-size:8px;color:#666;margin-top:3px">${esc(selectedShareProduct.desc)}</p>
+ const preview = document.getElementById("shareProductPreview");
+ if(preview) {
+  preview.innerHTML = `
+   <div style="display:flex;gap:7px;background:#faf7ef;padding:7px;border-radius:8px">
+    <img src="${esc(selectedShareProduct.img)}" style="width:60px;height:60px;object-fit:cover;border-radius:6px">
+    <div>
+     <b style="font-size:10px">${esc(selectedShareProduct.name)}</b>
+     <p style="font-size:8px;color:#666;margin-top:3px">${esc(selectedShareProduct.desc)}</p>
+    </div>
    </div>
-  </div>
- `;
+  `;
+ }
  openModal("resellerShareModal");
 }
 
 function updateSharePrice() {
  if (!selectedShareProduct) return;
- const commission = Math.max(0, Number(document.getElementById("shareCommissionInput").value || 0));
+ const commInput = document.getElementById("shareCommissionInput");
+ const commission = Math.max(0, Number(commInput ? commInput.value : 100));
  const base = Number(selectedShareProduct.wholesalePrice);
  const customer = base + commission;
- document.getElementById("shareBasePrice").textContent = formatPrice(base);
- document.getElementById("shareCustomerPrice").textContent = formatPrice(customer);
- document.getElementById("shareProfit").textContent = formatPrice(commission);
+ 
+ const bPrice = document.getElementById("shareBasePrice");
+ const cPrice = document.getElementById("shareCustomerPrice");
+ const pProfit = document.getElementById("shareProfit");
+
+ if(bPrice) bPrice.textContent = formatPrice(base);
+ if(cPrice) cPrice.textContent = formatPrice(customer);
+ if(pProfit) pProfit.textContent = formatPrice(commission);
 }
 
 function makeShareData() {
- const commission = Math.max(0, Number(document.getElementById("shareCommissionInput").value || 0));
+ const commInput = document.getElementById("shareCommissionInput");
+ const commission = Math.max(0, Number(commInput ? commInput.value : 100));
  const p = selectedShareProduct;
  const customerPrice = p.wholesalePrice + commission;
  const shareUrl = window.location.href.split("#")[0] + "#reseller=" + encodeURIComponent(resellerUID) + "&product=" + p.id + "&commission=" + commission;
@@ -767,31 +840,42 @@ function saveToMiniStore() {
 
 function openResellerProfitEngine() {
  const select = document.getElementById("profitProduct");
- select.innerHTML = products.map(p => `<option value="${p.id}">${esc(p.name)} — ${formatPrice(p.wholesalePrice)}</option>`).join("");
+ if(select) {
+  select.innerHTML = products.map(p => `<option value="${p.id}">${esc(p.name)} — ${formatPrice(p.wholesalePrice)}</option>`).join("");
+ }
  openModal("profitModal");
 }
 
 function calculateResellerProfit() {
- const id = Number(document.getElementById("profitProduct").value);
+ const sel = document.getElementById("profitProduct");
+ const id = Number(sel ? sel.value : 0);
  const p = products.find(x => x.id === id);
- const selling = Number(document.getElementById("profitSellingPrice").value || 0);
- const qty = Math.max(1, Number(document.getElementById("profitQuantity").value || 1));
+ const sellInput = document.getElementById("profitSellingPrice");
+ const qtyInput = document.getElementById("profitQuantity");
+ const selling = Number(sellInput ? sellInput.value : 0);
+ const qty = Math.max(1, Number(qtyInput ? qtyInput.value : 1));
+ 
  if (!p || !selling) { alert("Enter selling price."); return; }
  const profit = (selling - p.wholesalePrice) * qty;
- document.getElementById("profitResult").innerHTML = `
-  <p style="font-size:9px">Base Cost: <b>${formatPrice(p.wholesalePrice)}</b></p>
-  <p style="font-size:9px;margin-top:4px">Customer Price: <b>${formatPrice(selling)}</b></p>
-  <p style="font-size:10px;margin-top:5px">Total Profit: <b style="color:${profit >= 0 ? "var(--green)" : "var(--red)"}">${formatPrice(profit)}</b></p>
- `;
+ const resBox = document.getElementById("profitResult");
+ if(resBox) {
+  resBox.innerHTML = `
+   <p style="font-size:9px">Base Cost: <b>${formatPrice(p.wholesalePrice)}</b></p>
+   <p style="font-size:9px;margin-top:4px">Customer Price: <b>${formatPrice(selling)}</b></p>
+   <p style="font-size:10px;margin-top:5px">Total Profit: <b style="color:${profit >= 0 ? "var(--green)" : "var(--red)"}">${formatPrice(profit)}</b></p>
+  `;
+ }
 }
 
 function openResellerStore() {
- document.getElementById("storeName").value = storeName;
+ const sInput = document.getElementById("storeName");
+ if(sInput) sInput.value = storeName;
  openModal("storeModal");
 }
 
 function saveStoreName() {
- storeName = document.getElementById("storeName").value.trim() || "My Zayina Store";
+ const sInput = document.getElementById("storeName");
+ storeName = sInput ? (sInput.value.trim() || "My Zayina Store") : "My Zayina Store";
  showToast("Store name saved!");
 }
 
@@ -800,82 +884,52 @@ function copyStoreLink() {
  navigator.clipboard?.writeText(link).then(() => showToast("Store link copied!")).catch(() => alert(link));
 }
 
+function saveDNA() {
+ const cat = document.getElementById("dnaCategory");
+ const occ = document.getElementById("dnaOccasion");
+ const bud = document.getElementById("dnaBudget");
+ 
+ dna = {
+  category: cat ? cat.value : "all",
+  occasion: occ ? occ.value : "all",
+  budget: bud ? bud.value : ""
+ };
+ saveLocalDeviceData();
+ showToast("Style DNA saved successfully!");
+ closeModal("dnaModal");
+ renderProducts();
+}
+
 function openLeaderboard() {
- const list = [{ name: "Zayina Partner", points: 540 }, { name: "Beauty Seller", points: 390 }, { name: "Fashion Hub", points: 280 }, { name: "New Reseller", points: 120 }];
- list.sort((a, b) => b.points - a.points);
- document.getElementById("leaderboardList").innerHTML = list.map((x, i) => `
-  <div style="display:flex;justify-content:space-between;padding:9px;margin-bottom:5px;background:#faf7ef;border-radius:7px;font-size:9px">
-   <span>${i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🏅"} ${esc(x.name)}</span>
-   <b>${x.points} pts</b>
-  </div>
- `).join("");
+ const lList = document.getElementById("leaderboardList");
+ if(lList) {
+  lList.innerHTML = `
+   <div style="background:#faf7ef; padding:8px; border-radius:6px; margin-bottom:5px; font-size:9px; display:flex; justify-content:space-between;">
+    <span>1. ${resellerUID || "You"} (Elite Reseller)</span>
+    <b>${resellerPoints} Pts</b>
+   </div>
+  `;
+ }
  openModal("leaderboardModal");
 }
 
 function changeCurrency() {
- currentCurrency = document.getElementById("currencySelector").value;
- renderProducts();
+ const sel = document.getElementById("currencySelector");
+ if(sel) {
+  currentCurrency = sel.value;
+  renderProducts();
+ }
 }
 
 function changeLanguage() {
- currentLang = document.getElementById("langSelector").value;
- if (currentLang === "UR") {
-  document.querySelector(".hero h1").textContent = "لگژری ہول سیل اور ریٹیل";
-  document.querySelector(".hero p").textContent = "پریمیم کاسمیٹکس اور فیشن کلیکشن۔";
- } else {
-  document.querySelector(".hero h1").textContent = "Luxury Wholesale & Retail";
-  document.querySelector(".hero p").textContent = "Premium cosmetics, fashion & accessories — all in one place.";
+ const sel = document.getElementById("langSelector");
+ if(sel) {
+  currentLang = sel.value;
+  showToast("Language changed to " + currentLang);
  }
 }
 
-function saveDNA() {
- dna = {
-  category: document.getElementById("dnaCategory").value,
-  occasion: document.getElementById("dnaOccasion").value,
-  budget: document.getElementById("dnaBudget").value
- };
- saveLocalDeviceData();
- closeModal("dnaModal");
- renderProducts();
- showToast("Your Shopping DNA saved ✨");
-}
-
-// Initialize countdown ticker and UI states
-window.addEventListener("load", () => {
- updateCartCount();
- updateDealMeter();
-
- resellerApproved = localStorage.getItem("zayinaResellerApproved") === "true";
- resellerUID = localStorage.getItem("zayinaResellerUID") || "";
- if (resellerApproved) {
-  document.getElementById("resellerFormView").style.display = "none";
-  document.getElementById("resauthStatusView").style.display = "block";
-  document.getElementById("userPortalUIDText").textContent = "Your Reseller UID: " + resellerUID;
-  updateResellerDashboard();
- }
-
- setInterval(() => {
-  const drop = document.getElementById("exclusiveDropArea");
-  if (!drop) return;
-  const now = new Date();
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
-  const diff = Math.max(0, end - now);
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor(diff % 3600000 / 60000);
-  const s = Math.floor(diff % 60000 / 1000);
-  drop.innerHTML = `
-   <div class="drop-card">
-    <b style="font-size:12px">🔥 ZAYINA EXCLUSIVE DROP</b>
-    <p style="font-size:8px;margin-top:3px">Today's selected products — limited availability.</p>
-    <p style="font-size:10px;margin-top:6px;color:#f4c95d">Ends in ${h}h ${m}m ${s}s</p>
-   </div>
-  `;
- }, 1000);
-});
-
-window.addEventListener("click", e => {
- if (e.target.classList.contains("modal")) {
-  e.target.style.display = "none";
- }
+// Initial Call to load data & UI
+document.addEventListener("DOMContentLoaded", () => {
+ updateResellerDashboard();
 });
