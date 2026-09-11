@@ -1,332 +1,344 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zayin Apparel - Exclusive Clothing Store</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Zayina Glamour | Luxury Cosmetics & Apparel</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- Header / Navbar -->
-    <header class="bg-black text-white sticky top-0 z-50 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="#" class="text-2xl font-bold tracking-wider">ZAYIN APPAREL</a>
-            
-            <div class="flex items-center space-x-6">
-                <!-- Currency / Language Switcher -->
-                <select id="currencySelector" class="bg-gray-800 text-white text-sm px-2 py-1 rounded border border-gray-700 focus:outline-none">
-                    <option value="PKR">PKR (₨)</option>
-                    <option value="USD">USD ($)</option>
-                </select>
+<body>
 
-                <!-- Cart Button -->
-                <button onclick="toggleCart()" class="relative focus:outline-none">
-                    <i class="fa-solid fa-shopping-bag text-xl"></i>
-                    <span id="cartCount" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
-                </button>
+<header>
+ <div class="logo" onclick="playLoudSound()">
+  <i class="fas fa-gem"></i>
+  <span>Zayina Glamour</span>
+ </div>
 
-                <!-- Admin Login Button -->
-                <button onclick="openAdminLogin()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition">
-                    <i class="fa-solid fa-lock mr-1"></i> Admin
-                </button>
-            </div>
-        </div>
-    </header>
+ <div class="header-main-actions">
+  <button class="btn-nav active-tab" id="navCosmetics" onclick="switchTab('cosmetics')">
+   <i class="fas fa-spa"></i> Cosmetics
+  </button>
+  <button class="btn-nav" id="navClothes" onclick="switchTab('clothes')">
+   <i class="fas fa-tshirt"></i> Clothes
+  </button>
+  <button class="btn-nav" id="navBundles" onclick="switchTab('bundles')">
+   <i class="fas fa-gift"></i> Bundles
+  </button>
+  <button class="btn-nav" onclick="openCartModal()">
+   <i class="fas fa-shopping-cart"></i> Cart <span id="cartCount" class="cart-badge-count">0</span>
+  </button>
+ </div>
+</header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        
-        <!-- Banner / Hero Section -->
-        <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 mb-10 shadow-lg flex flex-col md:flex-row justify-between items-center">
-            <div class="mb-6 md:mb-0 max-w-xl">
-                <h1 class="text-4xl font-extrabold mb-3">Elevate Your Style with Zayin Apparel</h1>
-                <p class="text-gray-300 mb-6">Discover premium clothing collections designed for modern streetwear and everyday comfort.</p>
-                <a href="#shopSection" class="bg-white text-black font-semibold px-6 py-3 rounded-lg shadow hover:bg-gray-200 transition">Shop Collection</a>
-            </div>
-            <div class="text-center">
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                    <p class="text-sm text-gray-400 mb-1">Want to become a Reseller?</p>
-                    <button onclick="openResellerModal()" class="text-yellow-400 font-bold underline hover:text-yellow-300 text-sm">Join Reseller Program</button>
-                </div>
-            </div>
-        </div>
+<div class="header-sub-row">
+ <div class="sub-links">
+  <span class="sub-link-item" onclick="openModal('reviewsModal')"><i class="fas fa-star"></i> Reviews</span>
+  <span class="sub-link-item" onclick="openModal('trackingModal')"><i class="fas fa-truck"></i> Track</span>
+  <span class="sub-link-item" onclick="openModal('resellerModal')"><i class="fas fa-handshake"></i> Reseller</span>
+  <span class="sub-link-item" onclick="openAdminPanel()"><i class="fas fa-lock"></i> Admin</span>
+  <span class="sub-link-item" onclick="openModal('dnaModal')"><i class="fas fa-wand-magic-sparkles"></i> My Style</span>
+ </div>
 
-        <!-- Products Section -->
-        <section id="shopSection">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold tracking-wide">Featured Products</h2>
-                <div id="adminControls" class="hidden">
-                    <button onclick="openAddProductModal()" class="bg-black text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition">
-                        <i class="fa-solid fa-plus mr-1"></i> Add Product (Admin)
-                    </button>
-                </div>
-            </div>
+ <div>
+  <select id="currencySelector" onchange="changeCurrency()" style="font-size:9px;padding:3px;border:1px solid #ccc;border-radius:4px">
+   <option value="PKR">PKR</option>
+   <option value="USD">USD</option>
+   <option value="INR">INR</option>
+  </select>
 
-            <!-- Product Grid -->
-            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Products will be loaded dynamically here -->
-                <div class="col-span-full text-center py-12 text-gray-500" id="loadingText">
-                    Loading products from database...
-                </div>
-            </div>
-        </section>
-    </main>
+  <select id="langSelector" onchange="changeLanguage()" style="font-size:9px;padding:3px;border:1px solid #ccc;border-radius:4px">
+   <option value="EN">EN</option>
+   <option value="UR">اردو</option>
+  </select>
+ </div>
+</div>
 
-    <!-- Cart Slide-over Drawer -->
-    <div id="cartDrawer" class="fixed inset-0 overflow-hidden z-50 hidden">
-        <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onclick="toggleCart()"></div>
-        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
-            <div class="w-screen max-w-md bg-white shadow-xl flex flex-col">
-                <div class="flex items-center justify-between px-6 py-4 bg-black text-white">
-                    <h3 class="text-lg font-bold">Your Shopping Cart</h3>
-                    <button onclick="toggleCart()" class="text-gray-400 hover:text-white">&times;</button>
-                </div>
-                <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
-                    <!-- Cart items go here -->
-                    <p class="text-gray-500 text-center py-8">Your cart is empty.</p>
-                </div>
-                <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
-                    <div class="flex justify-between text-base font-medium text-gray-900 mb-4">
-                        <p>Subtotal</p>
-                        <p id="cartSubtotal">₨0</p>
-                    </div>
-                    <button onclick="checkoutWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center">
-                        <i class="fa-brands fa-whatsapp mr-2 text-xl"></i> Checkout via WhatsApp
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="fomo-ticker">
+ <span>✨ ZAYINA GLAMOUR &nbsp; • &nbsp; Authentic Products &nbsp; • &nbsp; Fast Delivery Across Pakistan &nbsp; • &nbsp; Wholesale & Retail</span>
+</div>
 
-    <!-- Admin Login Modal -->
-    <div id="adminLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-xl w-80 shadow-lg">
-            <h3 class="text-lg font-bold mb-4">Admin Login</h3>
-            <input type="password" id="adminPasswordInput" placeholder="Enter Password" class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:border-black">
-            <div class="flex justify-end space-x-2">
-                <button onclick="closeAdminLogin()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-                <button onclick="verifyAdmin()" class="px-4 py-2 text-sm bg-black text-white rounded hover:bg-gray-800">Login</button>
-            </div>
-        </div>
-    </div>
+<section class="hero">
+ <h1>Luxury Wholesale & Retail</h1>
+ <p>Premium cosmetics, fashion & accessories — all in one place.</p>
+ <div class="hero-tags">
+  <span class="hero-tag">✨ Trending</span>
+  <span class="hero-tag">💎 Premium Picks</span>
+  <span class="hero-tag">🛍 Reseller Friendly</span>
+  <span class="hero-tag">🚚 Pakistan Delivery</span>
+ </div>
+</section>
 
-    <!-- Add Product Modal (Admin Only) -->
-    <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
-            <h3 class="text-lg font-bold mb-4">Add New Product</h3>
-            <form id="addProductForm" onsubmit="saveProduct(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Product Name</label>
-                    <input type="text" id="prodName" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Price (PKR)</label>
-                    <input type="number" id="prodPrice" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">Image URL</label>
-                    <input type="url" id="prodImage" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeAddProductModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
-                    <button type="submit" class="px-4 py-2 text-sm bg-black text-white rounded hover:bg-gray-800">Save Product</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="container">
 
-    <!-- Reseller Modal -->
-    <div id="resellerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
-            <h3 class="text-lg font-bold mb-2">Reseller Program</h3>
-            <p class="text-xs text-gray-600 mb-4">Generate your custom reseller link and earn profit on every sale you drive to Zayin Apparel.</p>
-            <div class="space-y-3">
-                <input type="text" id="resellerName" placeholder="Your Name / Store Name" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none">
-                <button onclick="generateResellerLink()" class="w-full bg-black text-white py-2 text-sm rounded hover:bg-gray-800">Generate My Link</button>
-                <div id="resellerLinkContainer" class="hidden">
-                    <p class="text-xs text-gray-500 mb-1">Your Shareable Link:</p>
-                    <input type="text" id="generatedLinkOutput" readonly class="w-full bg-gray-100 border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 select-all">
-                </div>
-            </div>
-            <div class="mt-4 text-right">
-                <button onclick="closeResellerModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Close</button>
-            </div>
-        </div>
-    </div>
+<div class="deal-meter-box">
+ <div style="flex:1">
+  <span><i class="fas fa-fire" style="color:#e63946"></i> <b id="dealMeterText">Add Rs. 2000 more to unlock free delivery!</b></span>
+  <div class="progress-line">
+   <div id="dealProgressFill" class="progress-fill"></div>
+  </div>
+ </div>
+ <span id="dealMeterProgress" style="font-weight:bold;margin-left:8px">0%</span>
+</div>
 
-    <!-- Script Logic -->
-    <script>
-        // Firebase Configuration (Replace with your actual Firebase config if custom needed)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForZayinApparel",
-            authDomain: "zayin-apparel.firebaseapp.com",
-            projectId: "zayin-apparel",
-            storageBucket: "zayin-apparel.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
-        };
+<div id="resellerDashboardArea" class="reseller-exclusive-box">
+ <h3 style="font-size:13px"><i class="fas fa-crown"></i> Reseller Partner Dashboard</h3>
+ <p style="font-size:9px">Status: <span id="dashResellerStatus" class="status-badge status-approved">Approved</span></p>
+ <p style="font-size:9px">UID: <b id="dashResellerUID" style="color:var(--accent)"></b></p>
+ <div class="stat-grid">
+  <div class="stat"><b id="resellerPoints">0</b><span>Points</span></div>
+  <div class="stat"><b id="resellerLevel">Bronze</b><span>Level</span></div>
+  <div class="stat"><b id="resellerSales">0</b><span>Orders</span></div>
+ </div>
+ <div class="reseller-actions">
+  <button class="small-btn" onclick="openResellerStore()"><i class="fas fa-store"></i> My Mini Store</button>
+  <button class="small-btn" onclick="openResellerProfitEngine()"><i class="fas fa-calculator"></i> Profit</button>
+  <button class="small-btn" onclick="openLeaderboard()"><i class="fas fa-ranking-star"></i> Ranking</button>
+ </div>
+</div>
 
-        // Initialize Firebase
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
+<div class="filter-search-bar">
+ <input type="text" id="searchInput" class="filter-input" placeholder="Search products..." oninput="applyFilters()" style="flex: 2;">
+ <div class="custom-select-trigger" onclick="openSortModal()">
+  <span id="currentSortLabel">Sort by Price</span>
+  <i class="fas fa-chevron-down" style="font-size: 8px; color: var(--accent);"></i>
+ </div>
+</div>
 
-        let cart = [];
-        let isAdmin = false;
-        const ADMIN_PASS = "Zayina66#"; //
+<div id="exclusiveDropArea"></div>
 
-        // Load products on start
-        window.onload = function() {
-            fetchProducts();
-        };
+<div id="sectionCosmetics">
+ <h2 class="section-title">Cosmetics & Makeup Collection</h2>
+ <div class="products-grid" id="cosmeticsGrid"></div>
+</div>
 
-        function fetchProducts() {
-            const grid = document.getElementById('productGrid');
-            db.collection("products").get().then((querySnapshot) => {
-                grid.innerHTML = "";
-                if(querySnapshot.empty) {
-                    grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No products available right now.[cite: 1]</div>`;
-                    return;
-                }
-                querySnapshot.forEach((doc) => {
-                    const p = doc.data();
-                    grid.innerHTML += `
-                        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
-                            <img src="${p.image}" alt="${p.name}" class="w-full h-64 object-cover">
-                            <div class="p-4">
-                                <h3 class="font-bold text-base mb-1 truncate">${p.name}</h3>
-                                <p class="text-gray-900 font-semibold mb-3">₨${p.price}</p>
-                                <button onclick="addToCart('${p.name}', ${p.price})" class="w-full bg-black text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition">Add to Cart</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            }).catch(error => {
-                console.error("Error getting documents: ", error);
-                document.getElementById('loadingText').innerText = "Failed to load products. Check database configuration.";
-            });
-        }
+<div id="sectionClothes" style="display:none">
+ <h2 class="section-title">Wholesale & Branded Clothes Hub</h2>
+ <div class="products-grid" id="clothesGrid"></div>
+</div>
 
-        // Cart Functions
-        function toggleCart() {
-            const drawer = document.getElementById('cartDrawer');
-            drawer.classList.toggle('hidden');
-        }
+<div id="sectionBundles" style="display:none">
+ <h2 class="section-title">🎁 Exclusive Bundle Offers</h2>
+ <div class="products-grid" id="bundlesGrid"></div>
+</div>
 
-        function addToCart(name, price) {
-            const existing = cart.find(item => item.name === name);
-            if(existing) {
-                existing.qty++;
-            } else {
-                cart.push({ name, price, qty: 1 });
-            }
-            updateCartUI();
-            toggleCart();
-        }
+</div>
 
-        function updateCartUI() {
-            const container = document.getElementById('cartItemsContainer');
-            const countBadge = document.getElementById('cartCount');
-            const subtotalEl = document.getElementById('cartSubtotal');
-            
-            let totalCount = 0;
-            let subtotal = 0;
+<footer>
+ © 2026 Zayina Glamour. All Rights Reserved.
+</footer>
 
-            if(cart.length === 0) {
-                container.innerHTML = `<p class="text-gray-500 text-center py-8">Your cart is empty.</p>`;
-            } else {
-                container.innerHTML = "";
-                cart.forEach((item, index) => {
-                    totalCount += item.qty;
-                    subtotal += item.price * item.qty;
-                    container.innerHTML += `
-                        <div class="flex justify-between items-center border-b pb-3">
-                            <div>
-                                <h4 class="font-semibold text-sm">${item.name}</h4>
-                                <p class="text-xs text-gray-550">₨${item.price} x ${item.qty}</p>
-                            </div>
-                            <button onclick="removeFromCart(${index})" class="text-red-500 text-xs hover:underline">Remove</button>
-                        </div>
-                    `;
-                });
-            }
-            countBadge.innerText = totalCount;
-            subtotalEl.innerText = `₨${subtotal}`;
-        }
+<div id="toast" class="toast"></div>
 
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            updateCartUI();
-        }
+<!-- Modals -->
+<div class="modal" id="sortModal">
+ <div class="sort-modal-content">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid #d4a373; padding-bottom: 8px;">
+   <h3 style="font-size:14px; font-family:'Playfair Display',serif; color:var(--accent);">Sort Options</h3>
+   <span style="font-size:18px; cursor:pointer; color:var(--accent); font-weight:bold;" onclick="closeModal('sortModal')">&times;</span>
+  </div>
+  <div class="sort-option-item active" id="sortOpt-all" onclick="selectSortOption('all', 'Sort by Price')"><span>Sort by Price</span><div class="custom-radio"></div></div>
+  <div class="sort-option-item" id="sortOpt-low" onclick="selectSortOption('low', 'Low to High')"><span>Low to High</span><div class="custom-radio"></div></div>
+  <div class="sort-option-item" id="sortOpt-high" onclick="selectSortOption('high', 'High to Low')"><span>High to Low</span><div class="custom-radio"></div></div>
+ </div>
+</div>
 
-        function checkoutWhatsApp() {
-            if(cart.length === 0) return alert('Your cart is empty!');
-            let message = "Hello Zayin Apparel, I want to place an order:%0A";
-            let subtotal = 0;
-            cart.forEach(item => {
-                message += `- ${item.name} (x${item.qty}) : ₨${item.price * item.qty}%0A`;
-                subtotal += item.price * item.qty;
-            });
-            message += `%0A*Total:* ₨${subtotal}`;
-            window.open(`https://wa.me/923000000000?text=${message}`, '_blank');
-        }
+<div class="modal" id="productDetailsModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('productDetailsModal')">&times;</span>
+  <div id="modalProductContentView"></div>
+ </div>
+</div>
 
-        // Admin Functions
-        function openAdminLogin() { document.getElementById('adminLoginModal').classList.remove('hidden'); }
-        function closeAdminLogin() { document.getElementById('adminLoginModal').classList.add('hidden'); }
-        
-        function verifyAdmin() {
-            const pass = document.getElementById('adminPasswordInput').value;
-            if(pass === ADMIN_PASS) {
-                isAdmin = true;
-                document.getElementById('adminControls').classList.remove('hidden');
-                closeAdminLogin();
-                alert('Admin Logged In Successfully!');
-            } else {
-                alert('Incorrect Password!');
-            }
-        }
+<div class="modal" id="resellerShareModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('resellerShareModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-share-nodes"></i> Share Product</h3>
+  <div id="shareProductPreview" style="margin-top:8px"></div>
+  <label style="font-size:9px;font-weight:600">Your Commission / Profit (Rs.)</label>
+  <input type="number" id="shareCommissionInput" class="form-control" value="100" min="0" oninput="updateSharePrice()">
+  <div class="reseller-price-box">
+   <p style="font-size:9px">Wholesale/Base Price: <b id="shareBasePrice">Rs. 0</b></p>
+   <p style="font-size:10px;margin-top:3px">Customer Price: <b id="shareCustomerPrice" style="color:var(--accent)">Rs. 0</b></p>
+   <p style="font-size:9px;margin-top:3px">Your Profit: <b id="shareProfit" style="color:var(--green)">Rs. 0</b></p>
+  </div>
+  <div class="share-grid">
+   <button class="share-btn share-wa" onclick="shareViaWhatsApp()"><i class="fab fa-whatsapp"></i> WhatsApp</button>
+   <button class="share-btn share-native" onclick="nativeShare()"><i class="fas fa-share-nodes"></i> Share</button>
+   <button class="share-btn share-copy" onclick="copyShareLink()"><i class="fas fa-copy"></i> Copy Link</button>
+   <button class="share-btn share-store" onclick="saveToMiniStore()"><i class="fas fa-store"></i> My Store</button>
+  </div>
+ </div>
+</div>
 
-        function openAddProductModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
-        function closeAddProductModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+<div class="modal" id="cartModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('cartModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-shopping-cart"></i> Your Shopping Cart</h3>
+  <div id="cartItemsList" style="max-height:200px;overflow-y:auto;margin:8px 0;font-size:10px"></div>
+  <div class="feature-box">
+   <b>Total: <span id="cartTotalPrice" style="color:var(--accent)">Rs. 0</span></b>
+   <p id="cartSavingText" style="font-size:8px;margin-top:3px;color:var(--green)"></p>
+  </div>
+  <button class="btn-main" style="background:#25d366" onclick="sendCartWhatsAppOrder()"><i class="fab fa-whatsapp"></i> Order & Invoice</button>
+ </div>
+</div>
 
-        function saveProduct(e) {
-            e.preventDefault();
-            const name = document.getElementById('prodName').value;
-            const price = Number(document.getElementById('prodPrice').value);
-            const image = document.getElementById('prodImage').value;
+<div class="modal" id="reviewsModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('reviewsModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-star"></i> Customer Reviews</h3>
+  <input id="revName" class="form-control" placeholder="Your Name">
+  <textarea id="revText" class="form-control" placeholder="Write your review..." style="height:55px"></textarea>
+  <button class="btn-main" onclick="submitUserReview()">Post Review</button>
+  <div id="reviewsFeedList" style="margin-top:10px"></div>
+ </div>
+</div>
 
-            db.collection("products").add({ name, price, image })
-            .then(() => {
-                alert('Product added successfully!');
-                closeAddProductModal();
-                document.getElementById('addProductForm').reset();
-                fetchProducts();
-            })
-            .catch((error) => {
-                alert('Error adding product: ' + error.message);
-            });
-        }
+<div class="modal" id="trackingModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('trackingModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-truck"></i> Order Tracking</h3>
+  <input id="trackIdInput" class="form-control" placeholder="Order ID e.g. ZAYIN-1234">
+  <button class="btn-main" onclick="checkOrderStatus()">Track Order</button>
+  <div id="trackingResultBox" style="display:none;margin-top:8px;background:var(--gray);padding:9px;border-radius:7px;font-size:9px"></div>
+ </div>
+</div>
 
-        // Reseller Functions
-        function openResellerModal() { document.getElementById('resellerModal').classList.remove('hidden'); }
-        function closeResellerModal() { document.getElementById('resellerModal').classList.add('hidden'); }
-        
-        function generateResellerLink() {
-            const name = document.getElementById('resellerName').value;
-            if(!name) return alert('Please enter your name.');
-            const link = window.location.origin + window.location.pathname + `?ref=${encodeURIComponent(name)}`;
-            document.getElementById('generatedLinkOutput').value = link;
-            document.getElementById('resellerLinkContainer').classList.remove('hidden');
-        }
-    </script>
+<div class="modal" id="resellerModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('resellerModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-handshake"></i> Reseller Program</h3>
+  <div id="resellerFormView">
+   <input id="resName" class="form-control" placeholder="Full Name">
+   <input id="resPhone" class="form-control" placeholder="0300-1234567">
+   <button class="btn-main" onclick="submitResellerApp()">Apply as Reseller</button>
+  </div>
+  <div id="resauthStatusView" style="display:none;text-align:center;padding:10px">
+   <p style="font-size:10px">Application Status</p>
+   <div id="userPortalStatusBadge" class="status-badge status-approved">Approved</div>
+   <p id="userPortalUIDText" style="font-size:9px;color:var(--accent);margin-top:5px"></p>
+   <button class="btn-main" onclick="openResellerDashboardTab()">Open Reseller Dashboard</button>
+  </div>
+ </div>
+</div>
+
+<div class="modal" id="adminModal">
+ <div class="modal-content" style="max-width:460px">
+  <span class="close-btn" onclick="closeModal('adminModal')">&times;</span>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+   <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-lock"></i> Admin Panel</h3>
+   <span id="syncStatusIndicator" class="status-badge status-approved" style="font-size:7px;">🟢 Live Sync</span>
+  </div>
+  <div id="adminLoginView" style="margin-top:10px">
+   <input type="password" id="adminPassInput" class="form-control" placeholder="Admin Password">
+   <button class="btn-main" onclick="verifyAdmin()">Login</button>
+  </div>
+  <div id="adminDashboardView" style="display:none; margin-top:10px">
+   <div class="stat-grid">
+    <div class="stat"><b id="adminTotalSales">Rs. 0</b><span>Total Sales</span></div>
+    <div class="stat"><b id="adminTotalProfit">Rs. 0</b><span>Profit</span></div>
+    <div class="stat"><b id="adminProductCount">0</b><span>Products</span></div>
+   </div>
+   <div class="feature-box">
+    <b style="font-size:10px;color:var(--accent)">Reseller Applications <span id="appBadgeCount" class="cart-badge-count" style="display:none">0</span></b>
+    <div id="adminRequestsBox" style="font-size:9px;margin-top:5px"></div>
+   </div>
+   <div class="feature-box">
+    <b style="font-size:10px;color:var(--accent)">Add New Product</b>
+    <input id="new_name" class="form-control" placeholder="Product Name">
+    <select id="new_category" class="form-control">
+     <option value="cosmetics">Cosmetics</option>
+     <option value="clothes">Clothes & Apparel</option>
+     <option value="bundles">Bundle Offer</option>
+    </select>
+    <select id="new_occasion" class="form-control">
+     <option value="Casual">Casual</option>
+     <option value="Party">Party</option>
+     <option value="Wedding">Wedding</option>
+     <option value="College">School/College</option>
+    </select>
+    <input id="new_marketPrice" type="number" class="form-control" placeholder="Market Cut Price">
+    <input id="new_retailPrice" type="number" class="form-control" placeholder="Retail Price">
+    <input id="new_wholesalePrice" type="number" class="form-control" placeholder="Wholesale Price">
+    <label style="font-size:9px;font-weight:600;display:block;margin-top:4px;">Upload Product Image to Cloud:</label>
+    <input id="new_img_file" type="file" accept="image/*" class="form-control" onchange="stageAdminImage(event)">
+    <input type="hidden" id="new_img">
+    <textarea id="new_desc" class="form-control" placeholder="Short Description" style="height:50px"></textarea>
+    <input id="new_highlights" class="form-control" placeholder="Highlights separated by comma">
+    <button class="btn-main" onclick="addNewProductByAdmin()">Add Product to Cloud</button>
+   </div>
+   <div class="feature-box">
+    <b style="font-size:10px;color:var(--accent)">Manage Products & Cloud Orders</b>
+    <div id="adminProductEditList" style="max-height:140px;overflow-y:auto;margin-top:5px"></div>
+    <div id="adminOrdersList" style="max-height:140px;overflow-y:auto;margin-top:8px"></div>
+   </div>
+  </div>
+ </div>
+</div>
+
+<div class="modal" id="dnaModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('dnaModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)">✨ My Shopping DNA</h3>
+  <select id="dnaCategory" class="form-control">
+   <option value="all">I like everything</option>
+   <option value="cosmetics">Beauty & Makeup</option>
+   <option value="clothes">Fashion</option>
+   <option value="bundles">Bundles</option>
+  </select>
+  <select id="dnaOccasion" class="form-control">
+   <option value="all">All Occasions</option>
+   <option value="Party">Party</option>
+   <option value="Wedding">Wedding</option>
+   <option value="Casual">Casual</option>
+   <option value="College">College</option>
+  </select>
+  <input id="dnaBudget" type="number" class="form-control" placeholder="Preferred budget">
+  <button class="btn-main" onclick="saveDNA()">Save My Style</button>
+ </div>
+</div>
+
+<div class="modal" id="profitModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('profitModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-calculator"></i> Reseller Profit Engine</h3>
+  <select id="profitProduct" class="form-control"></select>
+  <input id="profitSellingPrice" type="number" class="form-control" placeholder="Your customer selling price">
+  <input id="profitQuantity" type="number" class="form-control" value="1" min="1" placeholder="Quantity">
+  <button class="btn-main" onclick="calculateResellerProfit()">Calculate</button>
+  <div id="profitResult" class="feature-box" style="margin-top:8px"></div>
+ </div>
+</div>
+
+<div class="modal" id="storeModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('storeModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-store"></i> My Reseller Mini Store</h3>
+  <input id="storeName" class="form-control" placeholder="Your Store Name">
+  <button class="btn-main" onclick="saveStoreName()">Save Store</button>
+  <div id="storePreview" style="margin-top:9px"></div>
+  <button class="btn-main" style="background:var(--dark)" onclick="copyStoreLink()"><i class="fas fa-copy"></i> Copy My Store Link</button>
+ </div>
+</div>
+
+<div class="modal" id="leaderboardModal">
+ <div class="modal-content">
+  <span class="close-btn" onclick="closeModal('leaderboardModal')">&times;</span>
+  <h3 style="font-size:15px;color:var(--accent)"><i class="fas fa-ranking-star"></i> Reseller Ranking</h3>
+  <div id="leaderboardList"></div>
+ </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script src="script.js"></script>
 </body>
 </html>
