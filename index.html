@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zayina Cosmetics & Apparel</title>
+    <!-- Aapki apni CSS file -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Aapka Main Storefront / UI -->
+    <header>
+        <h1>Zayina Cosmetics & Apparel</h1>
+        <p>Real-Time Synchronized Store</p>
+    </header>
+
+    <main>
+        <section id="products-section">
+            <h2>Available Products</h2>
+            <!-- Real-time products yahan automatically load honge -->
+            <div id="product-container" class="product-grid">
+                <p>Loading real-time products...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Firebase SDK aur Real-Time Sync Logic -->
+    <script type="module">
+        // 1. Firebase Initialization (Aap apni credentials yahan dalein ge)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 2. Real-Time Product Listener (Baghair page refresh ke update hoga)
+        function initRealtimeProducts() {
+            const container = document.getElementById("product-container");
+            if (!container) return;
+
+            // onSnapshot saari devices par live changes sync rakhta hai
+            onSnapshot(collection(db, "products"), (snapshot) => {
+                if (snapshot.empty) {
+                    container.innerHTML = "<p>No products available right now.</p>";
+                    return;
+                }
+
+                let productsHTML = "";
+                snapshot.forEach((doc) => {
+                    const product = doc.data();
+                    productsHTML += `
+                        <div class="product-card">
+                            <h3>${product.name || 'Product'}</h3>
+                            <p>Price: Rs. ${product.price || '0'}</p>
+                            <p>${product.description || ''}</p>
+                        </div>
+                    `;
+                });
+                container.innerHTML = productsHTML;
+            }, (error) => {
+                console.error("Error fetching real-time products: ", error);
+                container.innerHTML = "<p>Connection error. Please check configuration.</p>";
+            });
+        }
+
+        // Page load hone par real-time sync start ho jaye gi
+        document.addEventListener("DOMContentLoaded", () => {
+            initRealtimeProducts();
+        });
+    </script>
+</body>
+</html>
