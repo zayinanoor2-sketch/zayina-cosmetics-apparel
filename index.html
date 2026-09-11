@@ -1,93 +1,332 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zayina Cosmetics & Apparel</title>
-    <!-- Aapki apni style file -->
-    <link rel="stylesheet" href="style.css">
+    <title>Zayin Apparel - Exclusive Clothing Store</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans">
 
-    <!-- Navigation Tabs / Header -->
-    <header class="main-header">
-        <h1>Zayina Cosmetics & Apparel</h1>
-        <nav class="nav-buttons">
-            <button onclick="switchTab('home')" class="nav-btn active-tab">Storefront</button>
-            <button onclick="switchTab('admin')" class="nav-btn">Admin Panel</button>
-            <button onclick="switchTab('order')" class="nav-btn">Place Order</button>
-            <button onclick="switchTab('reseller')" class="nav-btn">Reseller Program</button>
-        </nav>
+    <!-- Header / Navbar -->
+    <header class="bg-black text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold tracking-wider">ZAYIN APPAREL</a>
+            
+            <div class="flex items-center space-x-6">
+                <!-- Currency / Language Switcher -->
+                <select id="currencySelector" class="bg-gray-800 text-white text-sm px-2 py-1 rounded border border-gray-700 focus:outline-none">
+                    <option value="PKR">PKR (₨)</option>
+                    <option value="USD">USD ($)</option>
+                </select>
+
+                <!-- Cart Button -->
+                <button onclick="toggleCart()" class="relative focus:outline-none">
+                    <i class="fa-solid fa-shopping-bag text-xl"></i>
+                    <span id="cartCount" class="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+                </button>
+
+                <!-- Admin Login Button -->
+                <button onclick="openAdminLogin()" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition">
+                    <i class="fa-solid fa-lock mr-1"></i> Admin
+                </button>
+            </div>
+        </div>
     </header>
 
-    <main class="container">
-        <!-- TAB 1: HOME STOREFRONT (Real-Time Products) -->
-        <section id="home-section" class="tab-content active">
-            <h2>Available Products</h2>
-            <div id="product-container" class="product-grid">
-                <p>Loading real-time products...</p>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Banner / Hero Section -->
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl p-8 mb-10 shadow-lg flex flex-col md:flex-row justify-between items-center">
+            <div class="mb-6 md:mb-0 max-w-xl">
+                <h1 class="text-4xl font-extrabold mb-3">Elevate Your Style with Zayin Apparel</h1>
+                <p class="text-gray-300 mb-6">Discover premium clothing collections designed for modern streetwear and everyday comfort.</p>
+                <a href="#shopSection" class="bg-white text-black font-semibold px-6 py-3 rounded-lg shadow hover:bg-gray-200 transition">Shop Collection</a>
             </div>
-        </section>
+            <div class="text-center">
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                    <p class="text-sm text-gray-400 mb-1">Want to become a Reseller?</p>
+                    <button onclick="openResellerModal()" class="text-yellow-400 font-bold underline hover:text-yellow-300 text-sm">Join Reseller Program</button>
+                </div>
+            </div>
+        </div>
 
-        <!-- TAB 2: ADMIN PANEL (Add Products) -->
-        <section id="admin-section" class="tab-content">
-            <h2>Admin Panel - Add Product</h2>
-            <form id="product-form" class="styled-form">
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" id="p-name" required placeholder="Enter product name">
+        <!-- Products Section -->
+        <section id="shopSection">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold tracking-wide">Featured Products</h2>
+                <div id="adminControls" class="hidden">
+                    <button onclick="openAddProductModal()" class="bg-black text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition">
+                        <i class="fa-solid fa-plus mr-1"></i> Add Product (Admin)
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Price (Rs.):</label>
-                    <input type="number" id="p-price" required placeholder="Enter price">
-                </div>
-                <div class="form-group">
-                    <label>Description:</label>
-                    <textarea id="p-desc" rows="3" placeholder="Enter description"></textarea>
-                </div>
-                <button type="submit" id="p-btn" class="action-btn">Add Product (Real-Time)</button>
-            </form>
-        </section>
+            </div>
 
-        <!-- TAB 3: PLACE ORDER -->
-        <section id="order-section" class="tab-content">
-            <h2>Checkout & Place Order</h2>
-            <form id="order-form" class="styled-form">
-                <div class="form-group">
-                    <label>Customer Name:</label>
-                    <input type="text" id="cust-name" required placeholder="Your full name">
+            <!-- Product Grid -->
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Products will be loaded dynamically here -->
+                <div class="col-span-full text-center py-12 text-gray-500" id="loadingText">
+                    Loading products from database...
                 </div>
-                <div class="form-group">
-                    <label>Phone Number:</label>
-                    <input type="text" id="cust-phone" required placeholder="Your phone number">
-                </div>
-                <div class="form-group">
-                    <label>Shipping Address:</label>
-                    <textarea id="cust-address" rows="3" required placeholder="Delivery address"></textarea>
-                </div>
-                <button type="submit" id="order-btn" class="action-btn">Place Order</button>
-            </form>
-        </section>
-
-        <!-- TAB 4: RESELLER PROGRAM -->
-        <section id="reseller-section" class="tab-content">
-            <h2>Reseller Application</h2>
-            <form id="reseller-form" class="styled-form">
-                <div class="form-group">
-                    <label>Full Name:</label>
-                    <input type="text" id="res-name" required placeholder="Your name">
-                </div>
-                <div class="form-group">
-                    <label>Phone / WhatsApp:</label>
-                    <input type="text" id="res-phone" required placeholder="Your WhatsApp number">
-                </div>
-                <button type="submit" id="res-btn" class="action-btn">Submit Application</button>
-            </form>
-            <div id="status-box" class="status-msg"></div>
+            </div>
         </section>
     </main>
 
-    <!-- Main JavaScript File Connection -->
-    <script type="module" src="app.js"></script>
+    <!-- Cart Slide-over Drawer -->
+    <div id="cartDrawer" class="fixed inset-0 overflow-hidden z-50 hidden">
+        <div class="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onclick="toggleCart()"></div>
+        <div class="absolute inset-y-0 right-0 max-w-full flex pl-10">
+            <div class="w-screen max-w-md bg-white shadow-xl flex flex-col">
+                <div class="flex items-center justify-between px-6 py-4 bg-black text-white">
+                    <h3 class="text-lg font-bold">Your Shopping Cart</h3>
+                    <button onclick="toggleCart()" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <!-- Cart items go here -->
+                    <p class="text-gray-500 text-center py-8">Your cart is empty.</p>
+                </div>
+                <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+                    <div class="flex justify-between text-base font-medium text-gray-900 mb-4">
+                        <p>Subtotal</p>
+                        <p id="cartSubtotal">₨0</p>
+                    </div>
+                    <button onclick="checkoutWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center">
+                        <i class="fa-brands fa-whatsapp mr-2 text-xl"></i> Checkout via WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-xl w-80 shadow-lg">
+            <h3 class="text-lg font-bold mb-4">Admin Login</h3>
+            <input type="password" id="adminPasswordInput" placeholder="Enter Password" class="w-full border border-gray-300 rounded px-3 py-2 mb-4 focus:outline-none focus:border-black">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeAdminLogin()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                <button onclick="verifyAdmin()" class="px-4 py-2 text-sm bg-black text-white rounded hover:bg-gray-800">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Product Modal (Admin Only) -->
+    <div id="addProductModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
+            <h3 class="text-lg font-bold mb-4">Add New Product</h3>
+            <form id="addProductForm" onsubmit="saveProduct(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Product Name</label>
+                    <input type="text" id="prodName" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Price (PKR)</label>
+                    <input type="number" id="prodPrice" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Image URL</label>
+                    <input type="url" id="prodImage" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeAddProductModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-sm bg-black text-white rounded hover:bg-gray-800">Save Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reseller Modal -->
+    <div id="resellerModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-6 rounded-xl w-full max-w-md shadow-lg">
+            <h3 class="text-lg font-bold mb-2">Reseller Program</h3>
+            <p class="text-xs text-gray-600 mb-4">Generate your custom reseller link and earn profit on every sale you drive to Zayin Apparel.</p>
+            <div class="space-y-3">
+                <input type="text" id="resellerName" placeholder="Your Name / Store Name" class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none">
+                <button onclick="generateResellerLink()" class="w-full bg-black text-white py-2 text-sm rounded hover:bg-gray-800">Generate My Link</button>
+                <div id="resellerLinkContainer" class="hidden">
+                    <p class="text-xs text-gray-500 mb-1">Your Shareable Link:</p>
+                    <input type="text" id="generatedLinkOutput" readonly class="w-full bg-gray-100 border border-gray-300 rounded px-2 py-1 text-xs text-gray-700 select-all">
+                </div>
+            </div>
+            <div class="mt-4 text-right">
+                <button onclick="closeResellerModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        // Firebase Configuration (Replace with your actual Firebase config if custom needed)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForZayinApparel",
+            authDomain: "zayin-apparel.firebaseapp.com",
+            projectId: "zayin-apparel",
+            storageBucket: "zayin-apparel.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        let cart = [];
+        let isAdmin = false;
+        const ADMIN_PASS = "Zayina66#"; //
+
+        // Load products on start
+        window.onload = function() {
+            fetchProducts();
+        };
+
+        function fetchProducts() {
+            const grid = document.getElementById('productGrid');
+            db.collection("products").get().then((querySnapshot) => {
+                grid.innerHTML = "";
+                if(querySnapshot.empty) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">No products available right now.[cite: 1]</div>`;
+                    return;
+                }
+                querySnapshot.forEach((doc) => {
+                    const p = doc.data();
+                    grid.innerHTML += `
+                        <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
+                            <img src="${p.image}" alt="${p.name}" class="w-full h-64 object-cover">
+                            <div class="p-4">
+                                <h3 class="font-bold text-base mb-1 truncate">${p.name}</h3>
+                                <p class="text-gray-900 font-semibold mb-3">₨${p.price}</p>
+                                <button onclick="addToCart('${p.name}', ${p.price})" class="w-full bg-black text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition">Add to Cart</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }).catch(error => {
+                console.error("Error getting documents: ", error);
+                document.getElementById('loadingText').innerText = "Failed to load products. Check database configuration.";
+            });
+        }
+
+        // Cart Functions
+        function toggleCart() {
+            const drawer = document.getElementById('cartDrawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function addToCart(name, price) {
+            const existing = cart.find(item => item.name === name);
+            if(existing) {
+                existing.qty++;
+            } else {
+                cart.push({ name, price, qty: 1 });
+            }
+            updateCartUI();
+            toggleCart();
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cartItemsContainer');
+            const countBadge = document.getElementById('cartCount');
+            const subtotalEl = document.getElementById('cartSubtotal');
+            
+            let totalCount = 0;
+            let subtotal = 0;
+
+            if(cart.length === 0) {
+                container.innerHTML = `<p class="text-gray-500 text-center py-8">Your cart is empty.</p>`;
+            } else {
+                container.innerHTML = "";
+                cart.forEach((item, index) => {
+                    totalCount += item.qty;
+                    subtotal += item.price * item.qty;
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <div>
+                                <h4 class="font-semibold text-sm">${item.name}</h4>
+                                <p class="text-xs text-gray-550">₨${item.price} x ${item.qty}</p>
+                            </div>
+                            <button onclick="removeFromCart(${index})" class="text-red-500 text-xs hover:underline">Remove</button>
+                        </div>
+                    `;
+                });
+            }
+            countBadge.innerText = totalCount;
+            subtotalEl.innerText = `₨${subtotal}`;
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function checkoutWhatsApp() {
+            if(cart.length === 0) return alert('Your cart is empty!');
+            let message = "Hello Zayin Apparel, I want to place an order:%0A";
+            let subtotal = 0;
+            cart.forEach(item => {
+                message += `- ${item.name} (x${item.qty}) : ₨${item.price * item.qty}%0A`;
+                subtotal += item.price * item.qty;
+            });
+            message += `%0A*Total:* ₨${subtotal}`;
+            window.open(`https://wa.me/923000000000?text=${message}`, '_blank');
+        }
+
+        // Admin Functions
+        function openAdminLogin() { document.getElementById('adminLoginModal').classList.remove('hidden'); }
+        function closeAdminLogin() { document.getElementById('adminLoginModal').classList.add('hidden'); }
+        
+        function verifyAdmin() {
+            const pass = document.getElementById('adminPasswordInput').value;
+            if(pass === ADMIN_PASS) {
+                isAdmin = true;
+                document.getElementById('adminControls').classList.remove('hidden');
+                closeAdminLogin();
+                alert('Admin Logged In Successfully!');
+            } else {
+                alert('Incorrect Password!');
+            }
+        }
+
+        function openAddProductModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
+        function closeAddProductModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('prodName').value;
+            const price = Number(document.getElementById('prodPrice').value);
+            const image = document.getElementById('prodImage').value;
+
+            db.collection("products").add({ name, price, image })
+            .then(() => {
+                alert('Product added successfully!');
+                closeAddProductModal();
+                document.getElementById('addProductForm').reset();
+                fetchProducts();
+            })
+            .catch((error) => {
+                alert('Error adding product: ' + error.message);
+            });
+        }
+
+        // Reseller Functions
+        function openResellerModal() { document.getElementById('resellerModal').classList.remove('hidden'); }
+        function closeResellerModal() { document.getElementById('resellerModal').classList.add('hidden'); }
+        
+        function generateResellerLink() {
+            const name = document.getElementById('resellerName').value;
+            if(!name) return alert('Please enter your name.');
+            const link = window.location.origin + window.location.pathname + `?ref=${encodeURIComponent(name)}`;
+            document.getElementById('generatedLinkOutput').value = link;
+            document.getElementById('resellerLinkContainer').classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
