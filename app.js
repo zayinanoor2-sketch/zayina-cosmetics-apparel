@@ -2,15 +2,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// --- FIREBASE CONFIGURATION ---
-// (Yahan apni asli Firebase credentials enter karein)
+// --- FIREBASE CONFIGURATION (Updated with your project keys) ---
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyB1iOKtsVgNh8dVW0wQv0kR1eOsyXymYaI",
+    authDomain: "zayina-cosmetics.firebaseapp.com",
+    projectId: "zayina-cosmetics",
+    storageBucket: "zayina-cosmetics.firebasestorage.app",
+    messagingSenderId: "1089060456207",
+    appId: "1:1089060456207:web:7fd9860b3bdd96488c207a"
 };
 
 const app = initializeApp(firebaseConfig);
