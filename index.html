@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zayina Cosmetics</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Announcement & Language/Currency Bar -->
+    <header class="top-bar">
+        <div class="logo">
+            <h1>Zayina Cosmetics</h1>
+        </div>
+        <div class="top-controls">
+            <select id="langSwitcher">
+                <option value="en">English</option>
+                <option value="ur">اردو</option>
+            </select>
+            
+            <select id="currencySwitcher">
+                <option value="PKR">PKR (Rs)</option>
+                <option value="USD">USD ($)</option>
+                <option value="INR">INR (₹)</option>
+            </select>
+
+            <button id="resellerBtn" class="btn-secondary"><i class="fa-solid fa-briefcase"></i> <span id="resellerBtnText">Reseller Portal</span></button>
+            <button id="cartBtn" class="btn-primary"><i class="fa-solid fa-cart-shopping"></i> Cart (<span id="cartCount">0</span>)</button>
+            <button id="adminLoginBtn" class="btn-dark"><i class="fa-solid fa-user-lock"></i> Admin</button>
+        </div>
+    </header>
+
+    <!-- Deal Meter Progress Bar -->
+    <section class="deal-meter-card">
+        <div class="deal-info">
+            <span id="dealLabel"><i class="fa-solid fa-truck-fast"></i> Free Shipping Threshold:</span>
+            <strong id="dealStatus">Rs. 0 / Rs. 2000</strong>
+        </div>
+        <div class="progress-bar-bg">
+            <div id="dealProgressBar" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+    </section>
+
+    <!-- Reseller Active Banner (Jab Link se koi aaye) -->
+    <div id="resellerBanner" class="reseller-banner hidden">
+        <p><i class="fa-solid fa-store"></i> Shopping from Partner Store: <span id="resellerStoreName">--</span> (UID: <span id="resellerUIDDisplay">--</span>)</p>
+    </div>
+
+    <!-- Main Products Section -->
+    <main class="container">
+        <div class="section-header">
+            <h2 id="productsHeading">Featured Products</h2>
+            <input type="text" id="searchInput" placeholder="Search products...">
+        </div>
+        
+        <div id="productGrid" class="product-grid">
+            <p class="loading-text">Loading live catalog...</p>
+        </div>
+    </main>
+
+    <!-- Reseller Modal -->
+    <div id="resellerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeReseller">&times;</span>
+            <h2><i class="fa-solid fa-user-plus"></i> Reseller Registration</h2>
+            <form id="resellerForm">
+                <input type="text" id="resellerName" placeholder="Your Full Name" required>
+                <input type="tel" id="resellerPhone" placeholder="WhatsApp Phone Number" required>
+                <input type="text" id="resellerStore" placeholder="Your Mini Store Name" required>
+                <button type="submit" class="btn-primary">Generate Reseller ID</button>
+            </form>
+
+            <div id="resellerDashboard" class="hidden">
+                <hr>
+                <h3>Your Reseller Details</h3>
+                <p><strong>Your UID:</strong> <span id="myUID"></span></p>
+                <p><strong>Store Name:</strong> <span id="myStoreName"></span></p>
+                <div class="profit-calc">
+                    <h4>Profit Calculator & Share Link Generator</h4>
+                    <select id="shareProductSelect"></select>
+                    <input type="number" id="customCommission" placeholder="Enter Your Commission (PKR)" min="0">
+                    <p>Customer Price: <strong>Rs. <span id="calculatedFinalPrice">0</span></strong></p>
+                    <button id="generateShareLinkBtn" class="btn-success"><i class="fa-brands fa-whatsapp"></i> Generate WhatsApp Share Link</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal & Panel -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content admin-modal">
+            <span class="close-btn" id="closeAdmin">&times;</span>
+            <div id="adminLoginForm">
+                <h2>Admin Login</h2>
+                <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password">
+                <button id="adminLoginSubmit" class="btn-dark">Login</button>
+            </div>
+
+            <div id="adminPanel" class="hidden">
+                <h2>Admin Dashboard</h2>
+                <div class="admin-add-product">
+                    <h3>Add New Product</h3>
+                    <input type="text" id="prodTitle" placeholder="Product Title" required>
+                    <input type="number" id="prodPrice" placeholder="Wholesale Price (PKR)" required>
+                    <input type="text" id="prodImg" placeholder="Image URL (e.g. Unsplash link)" required>
+                    <textarea id="prodDesc" placeholder="Product Description"></textarea>
+                    <button id="addProductBtn" class="btn-primary">Publish Product (Live Sync)</button>
+                </div>
+                <hr>
+                <h3>Existing Products</h3>
+                <div id="adminProductList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeCart">&times;</span>
+            <h2>Your Shopping Cart</h2>
+            <div id="cartItemsContainer"></div>
+            <div class="cart-summary">
+                <p>Total Amount: <strong>Rs. <span id="cartTotal">0</span></strong></p>
+                <div class="checkout-fields">
+                    <input type="text" id="custName" placeholder="Your Name" required>
+                    <input type="text" id="custAddress" placeholder="Delivery Address" required>
+                    <input type="tel" id="custPhone" placeholder="WhatsApp Number" required>
+                </div>
+                <button id="checkoutBtn" class="btn-success"><i class="fa-brands fa-whatsapp"></i> Place Order via WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Scripts -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/admin.js"></script>
+</body>
+</html>
