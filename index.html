@@ -14,9 +14,9 @@
         <div class="header-top">
             <h1 class="brand-title">Zayina Glamour <span class="sub-title">| Luxury</span></h1>
             <div class="top-nav-pills">
-                <button class="pill-btn active"><i class="fa-solid fa-cookie"></i> Cosmetics</button>
-                <button class="pill-btn"><i class="fa-solid fa-shirt"></i> Clothes</button>
-                <button class="pill-btn"><i class="fa-solid fa-boxes-packing"></i> Bundles</button>
+                <button class="pill-btn active" data-category="Cosmetics"><i class="fa-solid fa-wand-magic-sparkles"></i> Cosmetics</button>
+                <button class="pill-btn" data-category="Clothes"><i class="fa-solid fa-shirt"></i> Clothes</button>
+                <button class="pill-btn" data-category="Bundles"><i class="fa-solid fa-boxes-packing"></i> Bundles</button>
                 <button class="pill-btn cart-pill" id="cartBtn"><i class="fa-solid fa-cart-shopping"></i> Cart <span id="cartCount" class="badge">0</span></button>
             </div>
         </div>
@@ -27,7 +27,6 @@
                 <span id="trackBtn"><i class="fa-solid fa-truck"></i> Track</span>
                 <span id="resellerBtn"><i class="fa-solid fa-handshake"></i> Reseller</span>
                 <span id="adminLoginBtn"><i class="fa-solid fa-user-shield"></i> Admin</span>
-                <span id="myStyleBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> My Style</span>
             </div>
             <div class="selectors">
                 <select id="currencySwitcher" class="custom-select">
@@ -35,14 +34,9 @@
                     <option value="USD">USD</option>
                     <option value="INR">INR</option>
                 </select>
-                <select id="langSwitcher" class="custom-select">
-                    <option value="en">EN</option>
-                    <option value="ur">اردو</option>
-                </select>
             </div>
         </div>
 
-        <!-- Banner Card -->
         <div class="hero-banner">
             <h2>Luxury Wholesale & Retail</h2>
             <p>Premium cosmetics, fashion & accessories — all in one place.</p>
@@ -50,7 +44,6 @@
                 <span>✨ Trending</span>
                 <span>💎 Premium Picks</span>
                 <span>🛍️ Reseller Friendly</span>
-                <span>🇵🇰 Pakistan Delivery</span>
             </div>
         </div>
     </header>
@@ -58,7 +51,7 @@
     <!-- Main Container -->
     <div class="container">
         
-        <!-- Free Delivery Progress Bar -->
+        <!-- Progress Bar -->
         <div class="deal-progress-card">
             <div class="deal-text">
                 <span id="dealLabel">🎁 Add Rs. 2000 more to unlock free delivery!</span>
@@ -69,35 +62,34 @@
             </div>
         </div>
 
-        <!-- Reseller Dashboard Widget -->
+        <!-- Reseller Widget -->
         <div class="reseller-dashboard-card">
             <div class="reseller-head">
                 <div>
                     <h3><i class="fa-solid fa-store"></i> Reseller Partner Dashboard</h3>
                     <span class="status-badge">Status: <strong class="approved">Approved</strong></span>
                 </div>
-                <div class="uid-tag">UID: <span id="displayResellerUID">ZG-432098</span></div>
+                <div class="uid-tag">UID: <span>ZG-432098</span></div>
             </div>
 
             <div class="reseller-stats">
                 <div class="stat-box">
-                    <span class="stat-val" id="resellerPoints">42</span>
+                    <span class="stat-val">42</span>
                     <span class="stat-lbl">Points</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-val highlight" id="resellerLevel">Bronze</span>
+                    <span class="stat-val highlight">Bronze</span>
                     <span class="stat-lbl">Level</span>
                 </div>
                 <div class="stat-box">
-                    <span class="stat-val" id="resellerOrders">0</span>
+                    <span class="stat-val">0</span>
                     <span class="stat-lbl">Orders</span>
                 </div>
             </div>
 
             <div class="reseller-actions">
-                <button id="openMiniStore" class="btn-dark-sm"><i class="fa-solid fa-store"></i> My Mini Store</button>
-                <button id="openProfitCalc" class="btn-dark-sm"><i class="fa-solid fa-calculator"></i> Profit</button>
-                <button id="openRanking" class="btn-dark-sm"><i class="fa-solid fa-ranking-star"></i> Ranking</button>
+                <button id="openMiniStore" class="btn-dark-sm"><i class="fa-solid fa-store"></i> Mini Store</button>
+                <button id="openProfitCalc" class="btn-dark-sm"><i class="fa-solid fa-calculator"></i> Profit Calc</button>
             </div>
         </div>
 
@@ -105,53 +97,56 @@
         <div class="filter-row">
             <input type="text" id="searchInput" placeholder="Search products..." class="search-input">
             <select id="sortSelect" class="sort-select">
-                <option value="default">Sort By Price</option>
-                <option value="low">Low to High</option>
-                <option value="high">High to Low</option>
+                <option value="default">Default Sort</option>
+                <option value="low">Price: Low to High</option>
+                <option value="high">Price: High to Low</option>
             </select>
         </div>
 
-        <!-- Exclusive Drop Section -->
-        <div class="exclusive-drop-bar">
-            <span>⚡ ZAYINA EXCLUSIVE DROP</span>
-            <small>Today's selected products — limited availability.</small>
-            <div class="timer">Ends in <strong id="dropTimer">0h 45m 12s</strong></div>
-        </div>
-
-        <!-- Products Section -->
+        <!-- Products Grid -->
         <div class="section-title">
-            <h3>Cosmetics & Makeup Collection</h3>
+            <h3 id="currentCategoryTitle">Cosmetics Collection</h3>
         </div>
 
-        <div id="productGrid" class="product-grid">
-            <!-- Dynamic Realtime Products -->
-        </div>
+        <div id="productGrid" class="product-grid"></div>
     </div>
 
-    <!-- Modals -->
+    <!-- MODALS SECTION -->
+
     <!-- Admin Modal -->
     <div id="adminModal" class="modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h4><i class="fa-solid fa-lock"></i> Admin Panel</h4>
+                <h4><i class="fa-solid fa-user-shield"></i> Admin Panel</h4>
                 <span class="close-modal" id="closeAdmin">&times;</span>
             </div>
             <div id="adminLoginForm">
-                <input type="password" id="adminPasswordInput" placeholder="Admin Password" class="input-field">
-                <button id="adminLoginSubmit" class="btn-gold-block">Login</button>
+                <input type="password" id="adminPasswordInput" placeholder="Enter Admin Password" class="input-field">
+                <button id="adminLoginSubmit" class="btn-primary-block">Login</button>
             </div>
             <div id="adminPanel" class="hidden">
-                <div class="admin-stats-row">
-                    <div><span>Rs. 0</span><small>Total Sales</small></div>
-                    <div><span>Rs. 0</span><small>Profit</small></div>
-                    <div><span id="adminProdCount">0</span><small>Products</small></div>
-                </div>
                 <h5>Add New Product</h5>
                 <input type="text" id="prodTitle" placeholder="Product Name" class="input-field">
-                <input type="number" id="prodPrice" placeholder="Wholesale Price" class="input-field">
-                <input type="text" id="prodImg" placeholder="Image URL" class="input-field">
+                <select id="prodCategory" class="input-field">
+                    <option value="Cosmetics">Cosmetics</option>
+                    <option value="Clothes">Clothes</option>
+                    <option value="Bundles">Bundles</option>
+                </select>
+                <input type="number" id="prodPrice" placeholder="Wholesale Price (Rs.)" class="input-field">
+                
+                <!-- Improved File Upload UI -->
+                <div class="file-upload-box">
+                    <label for="prodImgFile" class="file-upload-label">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Product Image
+                    </label>
+                    <input type="file" id="prodImgFile" accept="image/*" class="hidden-file-input">
+                    <div id="imagePreviewContainer" class="image-preview-container hidden">
+                        <img id="imagePreview" src="" alt="Preview">
+                    </div>
+                </div>
+
                 <textarea id="prodDesc" placeholder="Short Description" class="input-field"></textarea>
-                <button id="addProductBtn" class="btn-gold-block">Add Product</button>
+                <button id="addProductBtn" class="btn-primary-block"><i class="fa-solid fa-plus"></i> Add Product</button>
                 
                 <h5 style="margin-top: 15px;">Manage Products</h5>
                 <div id="adminProductList"></div>
@@ -163,43 +158,52 @@
     <div id="cartModal" class="modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h4><i class="fa-solid fa-cart-shopping"></i> Your Shopping Cart</h4>
+                <h4><i class="fa-solid fa-cart-shopping"></i> Shopping Cart</h4>
                 <span class="close-modal" id="closeCart">&times;</span>
             </div>
             <div id="cartItemsContainer"></div>
             <div class="cart-footer">
                 <div class="total-row">Total: <strong>Rs. <span id="cartTotal">0</span></strong></div>
-                <button id="checkoutBtn" class="btn-whatsapp-block"><i class="fa-brands fa-whatsapp"></i> Order & Invoice</button>
+                <button id="checkoutBtn" class="btn-whatsapp-block"><i class="fa-brands fa-whatsapp"></i> Order on WhatsApp</button>
             </div>
         </div>
     </div>
 
-    <!-- Share / Profit Calculator Modal -->
+    <!-- Share Modal -->
     <div id="shareModal" class="modal">
         <div class="modal-card">
             <div class="modal-header">
-                <h4><i class="fa-solid fa-share-nodes"></i> Share Product</h4>
+                <h4><i class="fa-solid fa-share-nodes"></i> Share & Earn</h4>
                 <span class="close-modal" id="closeShare">&times;</span>
             </div>
             <div class="share-modal-body">
                 <img id="shareProdImg" src="" alt="">
                 <h5 id="shareProdTitle">Product Title</h5>
-                <p id="shareProdDesc">Description</p>
                 
-                <label>Your Commission / Profit (Rs.)</label>
-                <input type="number" id="resellerCommissionInput" value="100" class="input-field">
+                <label style="font-size: 11px; color: var(--text-muted);">Set Your Commission (Rs.)</label>
+                <input type="number" id="resellerCommissionInput" value="200" class="input-field">
                 
                 <div class="calc-breakdown">
-                    <p>Wholesale/Base Price: <strong>Rs. <span id="shareBasePrice">0</span></strong></p>
-                    <p>Customer Price: <strong class="text-gold">Rs. <span id="shareCustomerPrice">0</span></strong></p>
-                    <p>Your Profit: <strong class="text-green">Rs. <span id="shareYourProfit">100</span></strong></p>
+                    <p>Base Price: <strong>Rs. <span id="shareBasePrice">0</span></strong></p>
+                    <p>Final Customer Price: <strong class="text-gold">Rs. <span id="shareCustomerPrice">0</span></strong></p>
+                    <p>Your Profit: <strong class="text-green">Rs. <span id="shareYourProfit">200</span></strong></p>
                 </div>
 
                 <div class="share-actions-grid">
-                    <button id="shareWhatsAppBtn" class="btn-wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
-                    <button id="copyShareLinkBtn" class="btn-copy"><i class="fa-solid fa-copy"></i> Copy Link</button>
+                    <button id="shareWhatsAppBtn" class="btn-wa"><i class="fa-brands fa-whatsapp"></i> Share on WhatsApp</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Info / Generic Modal for Buttons -->
+    <div id="infoModal" class="modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h4 id="infoTitle">Info</h4>
+                <span class="close-modal" id="closeInfo">&times;</span>
+            </div>
+            <div id="infoBody" style="font-size: 12px; color: #475569; padding: 10px 0;"></div>
         </div>
     </div>
 
