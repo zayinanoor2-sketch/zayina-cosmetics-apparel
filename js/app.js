@@ -4,39 +4,21 @@ const ADMIN_WHATSAPP = "923400766741";
 let productsList = [];
 let cart = [];
 let currentCurrency = "PKR";
-let exchangeRates = { PKR: 1, USD: 0.0036, INR: 0.30 };
-let activeReseller = null;
+let rates = { PKR: 1, USD: 0.0036, INR: 0.30 };
+let currentShareProduct = null;
 
-// Initialize Live Realtime Products Listener
 window.addEventListener('DOMContentLoaded', () => {
-    parseResellerURL();
-    listenToProducts();
-    setupEventListeners();
+    listenProducts();
+    setupUIEvents();
 });
 
-// URL Param Check for Reseller Share Links
-function parseResellerURL() {
-    const params = new URLSearchParams(window.location.search);
-    const resellerUid = params.get('ref');
-    const storeName = params.get('store');
-    
-    if (resellerUid) {
-        activeReseller = { uid: resellerUid, storeName: storeName || 'Partner Store' };
-        document.getElementById('resellerBanner').classList.remove('hidden');
-        document.getElementById('resellerStoreName').innerText = activeReseller.storeName;
-        document.getElementById('resellerUIDDisplay').innerText = activeReseller.uid;
-    }
-}
-
-// Real-time Firestore Sync
-function listenToProducts() {
+function listenProducts() {
     onSnapshot(collection(db, "products"), (snapshot) => {
         productsList = [];
         snapshot.forEach((doc) => {
             productsList.push({ id: doc.id, ...doc.data() });
         });
         renderProducts();
-        populateResellerSelect();
     });
 }
 
@@ -45,139 +27,117 @@ function renderProducts() {
     grid.innerHTML = '';
 
     if (productsList.length === 0) {
-        grid.innerHTML = '<p>No products available right now.</p>';
+        grid.innerHTML = '<p style="font-size:12px; color:#64748b;">No products added yet.</p>';
         return;
     }
 
-    productsList.forEach(prod => {
-        const finalPrice = calculateDisplayPrice(prod.price);
+    productsList.forEach(p => {
+        const rate = rates[currentCurrency];
+        const displayPrice = (p.price * rate).toFixed(0);
+        const marketPrice = p.marketCutPrice ? (p.marketCutPrice * rate).toFixed(0) : (p.price * 1.2 * rate).toFixed(0);
+
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <img src="${prod.image || 'https://via.placeholder.com/150'}" alt="${prod.title}">
-            <h3>${prod.title}</h3>
-            <p>${prod.description || ''}</p>
-            <div class="price-tag">${currentCurrency} ${finalPrice.toFixed(2)}</div>
-            <button onclick="addToCart('${prod.id}')" class="btn-primary">Add to Cart</button>
+            <span class="match-badge">85% Match</span>
+            <img src="${p.image || 'https://via.placeholder.com/150'}" alt="${p.title}">
+            <h4>${p.title}</h4>
+            <p>${p.description || ''}</p>
+            <div class="price-row">
+                <span class="market-price">${currentCurrency} ${marketPrice}</span>
+                <span class="retail-price">${currentCurrency} ${displayPrice}</span>
+                <span class="discount-tag">-15%</span>
+            </div>
+            <div class="card-actions">
+                <button class="btn-card-cart" onclick="addToCart('${p.id}')"><i class="fa-solid fa-cart-shopping"></i> Cart</button>
+                <button class="btn-card-buy" onclick="buyNow('${p.id}')"><i class="fa-solid fa-bolt"></i> Buy</button>
+                <button class="btn-card-share" onclick="openShareModal('${p.id}')"><i class="fa-solid fa-share"></i> Share</button>
+            </div>
         `;
         grid.appendChild(card);
     });
 }
 
-function calculateDisplayPrice(basePrice) {
-    const params = new URLSearchParams(window.location.search);
-    const customMarkup = parseFloat(params.get('markup') || 0);
-    const totalPkr = parseFloat(basePrice) + customMarkup;
-    return totalPkr * exchangeRates[currentCurrency];
-}
-
-window.addToCart = function(productId) {
-    const product = productsList.find(p => p.id === productId);
-    if (!product) return;
-    
-    const existing = cart.find(item => item.id === productId);
-    if (existing) {
-        existing.qty += 1;
-    } else {
-        const params = new URLSearchParams(window.location.search);
-        const customMarkup = parseFloat(params.get('markup') || 0);
-        cart.push({ ...product, qty: 1, sellingPrice: product.price + customMarkup });
-    }
-    updateCartUI();
+window.addToCart = function(id) {
+    const p = productsList.find(prod => prod.id === id);
+    if (!p) return;
+    const item = cart.find(i => i.id === id);
+    if (item) item.qty += 1;
+    else cart.push({ ...p, qty: 1 });
+    updateCart();
 };
 
-function updateCartUI() {
-    document.getElementById('cartCount').innerText = cart.reduce((sum, i) => sum + i.qty, 0);
+window.buyNow = function(id) {
+    window.addToCart(id);
+    document.getElementById('cartModal').classList.add('show');
+};
+
+function updateCart() {
+    document.getElementById('cartCount').innerText = cart.reduce((s, i) => s + i.qty, 0);
+    const totalPKR = cart.reduce((s, i) => s + (i.price * i.qty), 0);
     
-    let totalPKR = cart.reduce((sum, i) => sum + (i.sellingPrice * i.qty), 0);
-    
-    // Deal Meter Update (Threshold 2000 PKR)
-    const progressPercent = Math.min((totalPKR / 2000) * 100, 100);
-    document.getElementById('dealProgressBar').style.width = `${progressPercent}%`;
-    
-    if (totalPKR >= 2000) {
-        document.getElementById('dealStatus').innerText = `Unlocked Free Delivery! (Rs. ${totalPKR})`;
-    } else {
-        document.getElementById('dealStatus').innerText = `Rs. ${totalPKR} / Rs. 2000`;
+    // Deal Progress Meter
+    const pct = Math.min((totalPKR / 2000) * 100, 100);
+    document.getElementById('dealProgressBar').style.width = `${pct}%`;
+    document.getElementById('dealPercent').innerText = `${pct.toFixed(0)}%`;
+    if(totalPKR >= 2000) {
+        document.getElementById('dealLabel').innerText = "🎉 Congratulations! Free Delivery Unlocked!";
     }
 
-    // Render Cart Items
     const container = document.getElementById('cartItemsContainer');
     container.innerHTML = '';
     cart.forEach(item => {
         container.innerHTML += `
-            <div class="cart-item-row">
-                <span>${item.title} x ${item.qty}</span>
-                <span>Rs. ${item.sellingPrice * item.qty}</span>
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+                <span>${item.title} x${item.qty}</span>
+                <span>Rs. ${item.price * item.qty}</span>
             </div>
         `;
     });
-
-    document.getElementById('cartTotal').innerText = (totalPKR * exchangeRates[currentCurrency]).toFixed(2);
+    document.getElementById('cartTotal').innerText = (totalPKR * rates[currentCurrency]).toFixed(0);
 }
 
-function setupEventListeners() {
-    // Currency Switcher
+window.openShareModal = function(id) {
+    currentShareProduct = productsList.find(p => p.id === id);
+    if (!currentShareProduct) return;
+
+    document.getElementById('shareProdImg').src = currentShareProduct.image;
+    document.getElementById('shareProdTitle').innerText = currentShareProduct.title;
+    document.getElementById('shareBasePrice').innerText = currentShareProduct.price;
+    
+    updateShareCalc();
+    document.getElementById('shareModal').classList.add('show');
+};
+
+function updateShareCalc() {
+    const comm = parseFloat(document.getElementById('resellerCommissionInput').value || 0);
+    const base = currentShareProduct ? currentShareProduct.price : 0;
+    document.getElementById('shareCustomerPrice').innerText = base + comm;
+    document.getElementById('shareYourProfit').innerText = comm;
+}
+
+function setupUIEvents() {
     document.getElementById('currencySwitcher').addEventListener('change', (e) => {
         currentCurrency = e.target.value;
         renderProducts();
-        updateCartUI();
+        updateCart();
     });
 
-    // Modals Controls
+    document.getElementById('resellerCommissionInput').addEventListener('input', updateShareCalc);
+
     document.getElementById('cartBtn').onclick = () => document.getElementById('cartModal').classList.add('show');
     document.getElementById('closeCart').onclick = () => document.getElementById('cartModal').classList.remove('show');
-    document.getElementById('resellerBtn').onclick = () => document.getElementById('resellerModal').classList.add('show');
-    document.getElementById('closeReseller').onclick = () => document.getElementById('resellerModal').classList.remove('show');
+    document.getElementById('closeShare').onclick = () => document.getElementById('shareModal').classList.remove('show');
 
-    // Reseller Registration
-    document.getElementById('resellerForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('resellerName').value;
-        const phone = document.getElementById('resellerPhone').value;
-        const store = document.getElementById('resellerStore').value;
-        const uid = 'ZG-' + Math.floor(100000 + Math.random() * 900000);
-
-        document.getElementById('myUID').innerText = uid;
-        document.getElementById('myStoreName').innerText = store;
-        document.getElementById('resellerDashboard').classList.remove('hidden');
-        alert(`Reseller Created Successfully! Your UID is ${uid}`);
-    });
-
-    // WhatsApp Checkout Routing
     document.getElementById('checkoutBtn').onclick = () => {
-        const name = document.getElementById('custName').value;
-        const address = document.getElementById('custAddress').value;
-        const phone = document.getElementById('custPhone').value;
-
-        if (!name || !address || !phone) {
-            alert('Please fill out your delivery details!');
-            return;
-        }
-
-        let orderText = `*NEW ORDER - ZAYINA COSMETICS*\n\n`;
-        if (activeReseller) {
-            orderText += `*Reseller UID:* ${activeReseller.uid}\n*Store Name:* ${activeReseller.storeName}\n\n`;
-        }
-        orderText += `*Customer:* ${name}\n*Phone:* ${phone}\n*Address:* ${address}\n\n*Items Ordered:*\n`;
-        
+        if(cart.length === 0) return alert("Cart is empty!");
+        let text = `Hello Zayina Glamour,\nI want to order:\n`;
         let total = 0;
-        cart.forEach(item => {
-            orderText += `- ${item.title} x${item.qty} = Rs. ${item.sellingPrice * item.qty}\n`;
-            total += item.sellingPrice * item.qty;
+        cart.forEach(i => {
+            text += `- ${i.title} = Rs. ${i.price * i.qty}\n`;
+            total += i.price * i.qty;
         });
-
-        orderText += `\n*Total Amount:* Rs. ${total}`;
-        
-        const waUrl = `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(orderText)}`;
-        window.open(waUrl, '_blank');
+        text += `Total: Rs. ${total}\nPlease confirm my order.`;
+        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
     };
-}
-
-function populateResellerSelect() {
-    const select = document.getElementById('shareProductSelect');
-    select.innerHTML = '<option value="">Select Product to Share</option>';
-    productsList.forEach(p => {
-        select.innerHTML += `<option value="${p.id}">${p.title} (Wholesale: Rs. ${p.price})</option>`;
-    });
 }
