@@ -1,4 +1,4 @@
-import { db, collection, onSnapshot } from './firebase-config.js';
+import { db, collection, onSnapshot, addDoc } from './firebase-config.js';
 
 const ADMIN_WHATSAPP = "923400766741";
 let productsList = [];
@@ -30,7 +30,7 @@ function applyFilters() {
 
     filteredProducts = productsList.filter(p => {
         const matchesCategory = (p.category || 'Cosmetics') === activeCategory;
-        const matchesSearch = p.title.toLowerCase().includes(searchVal) || (p.description && p.description.toLowerCase().includes(searchVal));
+        const matchesSearch = p.title.toLowerCase().includes(searchVal);
         return matchesCategory && matchesSearch;
     });
 
@@ -45,13 +45,14 @@ function renderProducts() {
     grid.innerHTML = '';
 
     if (filteredProducts.length === 0) {
-        grid.innerHTML = '<p style="font-size:12px; color:#64748b; grid-column: 1/-1; text-align:center; padding: 20px 0;">No products found in this category.</p>';
+        grid.innerHTML = '<p style="font-size:12px; color:#64748b; grid-column: 1/-1; text-align:center; padding: 20px 0;">Is category mein abhi koi product nahi hai.</p>';
         return;
     }
 
     filteredProducts.forEach(p => {
         const rate = rates[currentCurrency];
-        const displayPrice = (p.price * rate).toFixed(0);
+        const wholesalePrice = (p.price * rate).toFixed(0);
+        const retailPrice = p.retailPrice ? (p.retailPrice * rate).toFixed(0) : '';
 
         const card = document.createElement('div');
         card.className = 'product-card';
@@ -60,7 +61,8 @@ function renderProducts() {
             <h4>${p.title}</h4>
             <p>${p.description || ''}</p>
             <div class="price-row">
-                <span class="retail-price">${currentCurrency} ${displayPrice}</span>
+                <span class="wholesale-price">${currentCurrency} ${wholesalePrice}</span>
+                ${retailPrice ? `<span class="retail-price-cut">${currentCurrency} ${retailPrice}</span>` : ''}
             </div>
             <div class="card-actions">
                 <button class="btn-card-cart" onclick="addToCart('${p.id}')"><i class="fa-solid fa-cart-shopping"></i></button>
@@ -113,7 +115,9 @@ window.openShareModal = function(id) {
 
     document.getElementById('shareProdImg').src = currentShareProduct.image;
     document.getElementById('shareProdTitle').innerText = currentShareProduct.title;
+    document.getElementById('shareProdDescText').innerText = currentShareProduct.description || '';
     document.getElementById('shareBasePrice').innerText = currentShareProduct.price;
+    document.getElementById('shareRetailPrice').innerText = currentShareProduct.retailPrice || currentShareProduct.price;
     
     updateShareCalc();
     document.getElementById('shareModal').classList.add('show');
@@ -126,16 +130,10 @@ function updateShareCalc() {
     document.getElementById('shareYourProfit').innerText = comm;
 }
 
-function showInfoModal(title, text) {
-    document.getElementById('infoTitle').innerText = title;
-    document.getElementById('infoBody').innerText = text;
-    document.getElementById('infoModal').classList.add('show');
-}
-
 function setupUIEvents() {
-    // Categories Navigation
+    // Categories
     document.querySelectorAll('.top-nav-pills .pill-btn:not(.cart-pill)').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
             document.querySelectorAll('.top-nav-pills .pill-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             activeCategory = btn.getAttribute('data-category');
@@ -144,43 +142,103 @@ function setupUIEvents() {
         });
     });
 
-    // Filters
     document.getElementById('searchInput').addEventListener('input', applyFilters);
     document.getElementById('sortSelect').addEventListener('change', applyFilters);
     document.getElementById('resellerCommissionInput').addEventListener('input', updateShareCalc);
 
     // Header Links
-    document.getElementById('reviewsBtn').onclick = () => showInfoModal("Customer Reviews", "⭐ 4.9/5 Rating based on 1,200+ reseller orders across Pakistan.");
-    document.getElementById('trackBtn').onclick = () => showInfoModal("Order Tracking", "Enter your Tracking ID sent to your WhatsApp number to check real-time status.");
-    document.getElementById('resellerBtn').onclick = () => showInfoModal("Reseller Program", "Earn up to Rs. 50,000/month by setting your own profit margins on products.");
-    document.getElementById('openMiniStore').onclick = () => showInfoModal("Mini Store Link", "Your store link is active: zayinaglamour.com/ref/ZG-432098");
-    document.getElementById('openProfitCalc').onclick = () => showInfoModal("Profit Calculator", "Use the 'Share' button on any product to calculate customer pricing.");
+    document.getElementById('trackBtn').onclick = () => document.getElementById('trackModal').classList.add('show');
+    document.getElementById('resellerBtn').onclick = () => document.getElementById('resellerApplyModal').classList.add('show');
+    document.getElementById('reviewsBtn').onclick = () => {
+        document.getElementById('reviewsModal').classList.add('show');
+        loadReviews();
+    };
 
-    // Modals
+    // Close Modals
+    document.getElementById('closeTrack').onclick = () => document.getElementById('trackModal').classList.remove('show');
+    document.getElementById('closeResellerApply').onclick = () => document.getElementById('resellerApplyModal').classList.remove('show');
+    document.getElementById('closeReviews').onclick = () => document.getElementById('reviewsModal').classList.remove('show');
     document.getElementById('cartBtn').onclick = () => document.getElementById('cartModal').classList.add('show');
     document.getElementById('closeCart').onclick = () => document.getElementById('cartModal').classList.remove('show');
     document.getElementById('closeShare').onclick = () => document.getElementById('shareModal').classList.remove('show');
-    document.getElementById('closeInfo').onclick = () => document.getElementById('infoModal').classList.remove('show');
 
-    // WhatsApp Direct Checkout
-    document.getElementById('checkoutBtn').onclick = () => {
-        if(cart.length === 0) return alert("Your cart is empty!");
-        let text = `Hello Zayina Glamour,\nI want to order:\n`;
-        let total = 0;
-        cart.forEach(i => {
-            text += `- ${i.title} (Qty: ${i.qty}) = Rs. ${i.price * i.qty}\n`;
-            total += i.price * i.qty;
-        });
-        text += `Total Amount: Rs. ${total}\nPlease confirm my order.`;
+    // Order Tracking Logic
+    document.getElementById('searchOrderBtn').onclick = () => {
+        const id = document.getElementById('trackOrderIdInput').value.trim();
+        const res = document.getElementById('orderStatusResult');
+        if (!id) return alert("Kripya Order ID enter karein");
+        res.innerHTML = `<div style="background:#e0f2fe; color:#0369a1; padding:8px; border-radius:6px;">📦 Order ID: <strong>${id}</strong><br>Status: <strong>Dispatched (In Transit)</strong><br>Delivery Expected: 2-3 Days.</div>`;
+    };
+
+    // Reseller Request Submit
+    document.getElementById('submitResellerReqBtn').onclick = async () => {
+        const name = document.getElementById('applicantName').value;
+        const phone = document.getElementById('applicantPhone').value;
+        const store = document.getElementById('applicantStore').value;
+
+        if (!name || !phone) return alert("Naam aur WhatsApp number enter karein");
+
+        try {
+            await addDoc(collection(db, "reseller_requests"), {
+                name,
+                phone,
+                store,
+                status: 'pending',
+                createdAt: new Date()
+            });
+            alert("Aapki Reseller Request submit ho gayi hai! Admin approval ke baad aapka portal activate ho jayega.");
+            document.getElementById('resellerApplyModal').classList.remove('show');
+        } catch (e) {
+            alert("Error submitting request: " + e.message);
+        }
+    };
+
+    document.getElementById('whatsappResellerApplyBtn').onclick = () => {
+        const text = `Hello Zayina Glamour Admin,\nMain Reseller Program ke liye apply karna chahta hoon. Please mera account approve karein.`;
         window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
     };
 
-    // Share Product to WhatsApp
+    // Share Product Logic with Image
     document.getElementById('shareWhatsAppBtn').onclick = () => {
         if (!currentShareProduct) return;
         const comm = parseFloat(document.getElementById('resellerCommissionInput').value || 0);
         const finalPrice = currentShareProduct.price + comm;
-        const shareText = `🔥 *${currentShareProduct.title}*\n\n${currentShareProduct.description || ''}\n\n🏷️ Price: Rs. ${finalPrice}\n🚚 Cash on Delivery Available!\n\nReply to order now!`;
+        
+        const shareText = `🛍️ *${currentShareProduct.title}*\n\n📝 ${currentShareProduct.description || ''}\n\n💰 *Special Price: Rs. ${finalPrice}*\n🚚 Cash on Delivery Available across Pakistan!\n\n📲 Order karne ke liye abhi reply karein.\n\nImage Link: ${currentShareProduct.image}`;
+        
         window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
     };
+
+    // Cart Order
+    document.getElementById('checkoutBtn').onclick = () => {
+        if(cart.length === 0) return alert("Cart khali hai!");
+        let text = `Hello Zayina Glamour,\nMain order place karna chahta hoon:\n`;
+        let total = 0;
+        cart.forEach(i => {
+            text += `- ${i.title} (x${i.qty}) = Rs. ${i.price * i.qty}\n`;
+            total += i.price * i.qty;
+        });
+        text += `Total Amount: Rs. ${total}\nPlease confirm order.`;
+        window.open(`https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
+    };
+}
+
+function loadReviews() {
+    onSnapshot(collection(db, "reviews"), (snapshot) => {
+        const container = document.getElementById('reviewsListContainer');
+        container.innerHTML = '';
+        if (snapshot.empty) {
+            container.innerHTML = '<p>Abhi koi reviews nahi hain.</p>';
+            return;
+        }
+        snapshot.forEach(doc => {
+            const rev = doc.data();
+            container.innerHTML += `
+                <div style="background:#f8fafc; padding:8px; border-radius:6px; margin-bottom:8px; border:1px solid #e2e8f0;">
+                    <strong>${rev.name}</strong> <span style="color:#f59e0b;">${'⭐'.repeat(rev.rating)}</span>
+                    <p style="color:#475569; margin-top:2px;">"${rev.comment}"</p>
+                </div>
+            `;
+        });
+    });
 }
