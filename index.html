@@ -106,6 +106,7 @@
                         <option value="Bundles">Bundles</option>
                     </select>
                     <div style="display: flex; gap: 6px;">
+                        <input type="number" id="prodMarketCutPrice" placeholder="Market Cut Price (Rs.)" class="input-field">
                         <input type="number" id="prodWholesalePrice" placeholder="Wholesale Price (Rs.)" class="input-field">
                         <input type="number" id="prodRetailPrice" placeholder="Retail Price (Rs.)" class="input-field">
                     </div>
@@ -138,7 +139,15 @@
                         <option value="3">⭐⭐⭐ (3 Stars)</option>
                     </select>
                     <textarea id="reviewComment" placeholder="Customer Feedback / Review" class="input-field"></textarea>
-                    <button id="postReviewBtn" class="btn-primary-block">Post Review</button>
+                    
+                    <div class="file-upload-box" style="margin-top: 8px;">
+                        <label for="reviewImgFile" class="file-upload-label">
+                            <i class="fa-solid fa-image"></i> Customer Photo (Optional)
+                        </label>
+                        <input type="file" id="reviewImgFile" accept="image/*" class="hidden-file-input">
+                    </div>
+                    
+                    <button id="postReviewBtn" class="btn-primary-block" style="margin-top: 8px;">Post Review</button>
                 </div>
             </div>
         </div>
@@ -227,8 +236,6 @@
         </div>
     </div>
 
-    <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/app.js"></script>
-    <script type="module" src="js/admin.js"></script>
 </body>
 </html>
