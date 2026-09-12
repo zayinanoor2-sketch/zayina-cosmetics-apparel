@@ -1,4 +1,4 @@
-import { db, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from './firebase-config.js';
+import { db, collection, addDoc, onSnapshot, doc, updateDoc } from './firebase-config.js';
 
 let selectedBase64Image = "";
 
@@ -12,14 +12,17 @@ function setupAdminEvents() {
     document.getElementById('adminLoginBtn').onclick = () => adminModal.classList.add('show');
     document.getElementById('closeAdmin').onclick = () => adminModal.classList.remove('show');
 
+    // Admin Login Verification
     document.getElementById('adminLoginSubmit').onclick = () => {
         const pass = document.getElementById('adminPasswordInput').value;
-        if (pass === "admin123") {
+        
+        // Updated Admin Password: Zaina66#
+        if (pass === "Zaina66#") {
             document.getElementById('adminLoginForm').classList.add('hidden');
             document.getElementById('adminPanel').classList.remove('hidden');
             loadResellerRequests();
         } else {
-            alert("Incorrect Admin Password!");
+            alert("Incorrect Admin Password! Kripya sahi password enter karein.");
         }
     };
 
@@ -28,7 +31,7 @@ function setupAdminEvents() {
     document.getElementById('tabResellersBtn').onclick = () => switchAdminTab('resellers');
     document.getElementById('tabAddReviewBtn').onclick = () => switchAdminTab('reviews');
 
-    // Image Upload
+    // File Upload System with Live Preview
     document.getElementById('prodImgFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
@@ -42,7 +45,7 @@ function setupAdminEvents() {
         }
     });
 
-    // Add Product with Wholesale + Retail
+    // Add Product with Wholesale + Retail Price
     document.getElementById('addProductBtn').onclick = async () => {
         const title = document.getElementById('prodTitle').value;
         const category = document.getElementById('prodCategory').value;
@@ -51,7 +54,7 @@ function setupAdminEvents() {
         const description = document.getElementById('prodDesc').value;
 
         if (!title || !price || !selectedBase64Image) {
-            return alert("Kripya Product Title, Wholesale Price aur Image upload karein.");
+            return alert("Kripya Product Name, Wholesale Price aur Image upload karein.");
         }
 
         try {
@@ -66,24 +69,27 @@ function setupAdminEvents() {
             });
 
             alert("Product Live Add ho gaya hai!");
+            
+            // Reset Form Fields
             document.getElementById('prodTitle').value = '';
             document.getElementById('prodWholesalePrice').value = '';
             document.getElementById('prodRetailPrice').value = '';
             document.getElementById('prodDesc').value = '';
+            document.getElementById('prodImgFile').value = '';
             document.getElementById('imagePreviewContainer').classList.add('hidden');
             selectedBase64Image = "";
         } catch (e) {
-            alert("Error: " + e.message);
+            alert("Error adding product: " + e.message);
         }
     };
 
-    // Post Admin Review
+    // Post Review (Admin Only)
     document.getElementById('postReviewBtn').onclick = async () => {
         const name = document.getElementById('reviewCustName').value;
         const rating = parseInt(document.getElementById('reviewRating').value);
         const comment = document.getElementById('reviewComment').value;
 
-        if (!name || !comment) return alert("Customer Name aur Review Comment required hai.");
+        if (!name || !comment) return alert("Customer Name aur Review detail required hai.");
 
         try {
             await addDoc(collection(db, "reviews"), {
@@ -92,15 +98,16 @@ function setupAdminEvents() {
                 comment,
                 createdAt: new Date()
             });
-            alert("Review Published ho gaya!");
+            alert("Customer Review successfully publish ho gaya!");
             document.getElementById('reviewCustName').value = '';
             document.getElementById('reviewComment').value = '';
         } catch (e) {
-            alert("Error posting review: " + e.message);
+            alert("Error publishing review: " + e.message);
         }
     };
 }
 
+// Tab Switching Helper
 function switchAdminTab(tab) {
     document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('adminAddProductSec').classList.add('hidden');
@@ -119,12 +126,13 @@ function switchAdminTab(tab) {
     }
 }
 
+// Load and Manage Reseller Requests Real-time
 function loadResellerRequests() {
     onSnapshot(collection(db, "reseller_requests"), (snapshot) => {
         const list = document.getElementById('resellerRequestsList');
         list.innerHTML = '';
         if (snapshot.empty) {
-            list.innerHTML = '<p style="font-size:11px;">Koi pending request nahi hai.</p>';
+            list.innerHTML = '<p style="font-size:11px; color:#64748b;">Abhi koi pending request nahi hai.</p>';
             return;
         }
 
@@ -136,10 +144,10 @@ function loadResellerRequests() {
             list.innerHTML += `
                 <div class="reseller-req-card">
                     <strong>${req.name}</strong> (${req.phone})<br>
-                    <small>Store: ${req.store || 'N/A'} | Status: <b style="color:${isApproved ? '#16a34a':'#dc2626'}">${req.status.toUpperCase()}</b></small>
+                    <small>Store Name: ${req.store || 'N/A'} | Status: <b style="color:${isApproved ? '#16a34a':'#dc2626'}">${req.status.toUpperCase()}</b></small>
                     <div class="actions">
                         ${!isApproved ? `<button class="btn-approve" onclick="updateResellerStatus('${id}', 'approved')">Approve</button>` : ''}
-                        ${isApproved ? `<button class="btn-reject" onclick="updateResellerStatus('${id}', 'rejected')">Reject (Remove Reseller)</button>` : ''}
+                        ${isApproved ? `<button class="btn-reject" onclick="updateResellerStatus('${id}', 'rejected')">Reject (Remove Access)</button>` : ''}
                     </div>
                 </div>
             `;
@@ -147,11 +155,12 @@ function loadResellerRequests() {
     });
 }
 
+// Approve or Reject Reseller Function
 window.updateResellerStatus = async function(docId, newStatus) {
     try {
         await updateDoc(doc(db, "reseller_requests", docId), { status: newStatus });
-        alert(`Reseller status updated to ${newStatus}`);
+        alert(`Reseller status successfully changed to: ${newStatus.toUpperCase()}`);
     } catch (e) {
-        alert("Error updating reseller: " + e.message);
+        alert("Error updating status: " + e.message);
     }
 };
